@@ -50,18 +50,18 @@ void *keyedlist_lookup(KeyedList *klist, const void *key) {
   return klist->_list._arr + (uintptr_t)lookup_val - 1;
 }
 
-inline KL_iter keyedlist_iter(KeyedList *klist) {
+KL_iter keyedlist_iter(KeyedList *klist) {
   ASSERT(NOT_NULL(klist));
   KL_iter iter = {._iter = map_iter(&klist->_map), ._list = &klist->_list};
   return iter;
 }
 
-inline bool kl_has(KL_iter *iter) { return has(&iter->_iter); }
+bool kl_has(KL_iter *iter) { return has(&iter->_iter); }
 
-inline void kl_inc(KL_iter *iter) { inc(&iter->_iter); }
+void kl_inc(KL_iter *iter) { inc(&iter->_iter); }
 
-inline const void *kl_key(KL_iter *iter) { return key(&iter->_iter); }
+const void *kl_key(KL_iter *iter) { return key(&iter->_iter); }
 
-inline const void *kl_value(KL_iter *iter) {
+const void *kl_value(KL_iter *iter) {
   return (void *)(iter->_list->_arr + (uintptr_t)value(&iter->_iter) - 1);
 }
