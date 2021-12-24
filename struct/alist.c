@@ -82,19 +82,19 @@ void alist_iterate(const AList *const e, EAction action) {
 }
 
 AL_iter alist_iter(const AList *const a) {
-  AL_iter iter = {._list = a, ._i = 0, .is_reverse = false};
+  AL_iter iter = {._list = a, ._i = 0, ._is_reverse = false};
   return iter;
 }
 
 AL_iter alist_riter(const AList *const a) {
-  AL_iter iter = {._list = a, ._i = alist_len(a) - 1, .is_reverse = true};
+  AL_iter iter = {._list = a, ._i = alist_len(a) - 1, ._is_reverse = true};
   return iter;
 }
 
 void *al_value(AL_iter *iter) { return alist_get(iter->_list, iter->_i); }
 
 void al_inc(AL_iter *iter) {
-  if (iter->is_reverse) {
+  if (iter->_is_reverse) {
     --iter->_i;
   } else {
     ++iter->_i;
@@ -102,7 +102,7 @@ void al_inc(AL_iter *iter) {
 }
 
 bool al_has(AL_iter *iter) {
-  if (iter->is_reverse) {
+  if (iter->_is_reverse) {
     return iter->_i >= 0;
   } else {
     return iter->_i < alist_len(iter->_list);

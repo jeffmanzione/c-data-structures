@@ -62,8 +62,8 @@ void alist_iterate(const AList *const a, EAction action);
 
 typedef struct {
   const AList *_list;
-  uint32_t _i;
-  bool is_reverse;
+  int _i;
+  bool _is_reverse;
 } AL_iter;
 
 // Returns an iterator on the alist.
