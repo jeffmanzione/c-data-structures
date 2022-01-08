@@ -20,50 +20,50 @@
 #define max(a, b) ((a) >= (b) ? (a) : (b))
 #endif
 
-#define DEFINE_ARRAYLIKE(name, type)                                 \
-  typedef struct name##_ name;                                       \
-  struct name##_ {                                                   \
-    uint32_t table_size;                                             \
-    uint32_t num_elts;                                               \
-    type *table;                                                     \
-  };                                                                 \
-  typedef struct {                                                   \
-    uint32_t _i;                                                     \
-    name *_arr;                                                      \
-  } name##_iter;                                                     \
-  void name##_init_sz(name *, size_t table_sz);                      \
-  void name##_init(name *);                                          \
-  name *name##_create();                                             \
-  name *name##_create_sz(size_t len);                                \
-  name *name##_create_copy(const type input[], size_t len);          \
-  void name##_finalize(name *);                                      \
-  void name##_delete(name *);                                        \
-  void name##_clear(name *const);                                    \
-  void name##_lshrink(name *const array, size_t amount);             \
-  void name##_rshrink(name *const array, size_t amount);             \
-  void name##_push(name *const, type);                               \
-  type name##_pop(name *const);                                      \
-  void name##_enqueue(name *const, type);                            \
-  type name##_dequeue(name *const);                                  \
-  type *name##_add_last(name *const);                                \
-  void name##_set(name *const, uint32_t, type);                      \
-  type *name##_set_ref(name *const array, uint32_t index);           \
-  type name##_get(name *const, uint32_t);                            \
-  type name##_last(name *const);                                     \
-  type *name##_get_ref(name *const, uint32_t);                       \
-  type name##_remove(name *const, uint32_t);                         \
-  uint32_t name##_size(const name *const);                           \
-  bool name##_is_empty(const name *const);                           \
-  name *name##_copy(const name *const);                              \
-  void name##_append(name *const head, const name *const tail);      \
-  void name##_append_range(name *const head, const name *const tail, \
-                           uint32_t tail_range_start,                \
-                           uint32_t tail_range_end);                 \
-  void name##_shift_amount(name *const array, uint32_t start_pos,    \
-                           uint32_t count, int32_t amount);          \
-  name##_iter name##_iterator(name *const);                          \
-  bool name##_has(name##_iter *);                                    \
-  void name##_inc(name##_iter *);                                    \
+#define DEFINE_ARRAYLIKE(name, type)                                           \
+  typedef struct name##_ name;                                                 \
+  struct name##_ {                                                             \
+    uint32_t table_size;                                                       \
+    uint32_t num_elts;                                                         \
+    type *table;                                                               \
+  };                                                                           \
+  typedef struct {                                                             \
+    uint32_t _i;                                                               \
+    name *_arr;                                                                \
+  } name##_iter;                                                               \
+  void name##_init_sz(name *, size_t table_sz);                                \
+  void name##_init(name *);                                                    \
+  name *name##_create();                                                       \
+  name *name##_create_sz(size_t len);                                          \
+  name *name##_create_copy(const type input[], size_t len);                    \
+  void name##_finalize(name *);                                                \
+  void name##_delete(name *);                                                  \
+  void name##_clear(name *const);                                              \
+  void name##_lshrink(name *const array, size_t amount);                       \
+  void name##_rshrink(name *const array, size_t amount);                       \
+  void name##_push(name *const, type);                                         \
+  type name##_pop(name *const);                                                \
+  void name##_enqueue(name *const, type);                                      \
+  type name##_dequeue(name *const);                                            \
+  type *name##_add_last(name *const);                                          \
+  void name##_set(name *const, uint32_t, type);                                \
+  type *name##_set_ref(name *const array, uint32_t index);                     \
+  type name##_get(name *const, uint32_t);                                      \
+  type name##_last(name *const);                                               \
+  type *name##_get_ref(name *const, uint32_t);                                 \
+  type name##_remove(name *const, uint32_t);                                   \
+  uint32_t name##_size(const name *const);                                     \
+  bool name##_is_empty(const name *const);                                     \
+  name *name##_copy(const name *const);                                        \
+  void name##_append(name *const head, const name *const tail);                \
+  void name##_append_range(name *const head, const name *const tail,           \
+                           uint32_t tail_range_start,                          \
+                           uint32_t tail_range_end);                           \
+  void name##_shift_amount(name *const array, uint32_t start_pos,              \
+                           uint32_t count, int32_t amount);                    \
+  name##_iter name##_iterator(name *const);                                    \
+  bool name##_has(name##_iter *);                                              \
+  void name##_inc(name##_iter *);                                              \
   type *name##_value(name##_iter *)
 
 #define IMPL_ARRAYLIKE(name, type)                                             \
@@ -222,7 +222,9 @@
   }                                                                            \
                                                                                \
   type name##_get(name *const array, uint32_t index) {                         \
-    ASSERT(NOT_NULL(array), index >= 0, index < array->num_elts);              \
+    ASSERT(NOT_NULL(array));                                                   \
+    ASSERT(index >= 0);                                                        \
+    ASSERT(index < array->num_elts);                                           \
     return array->table[index];                                                \
   }                                                                            \
   type name##_last(name *const array) {                                        \

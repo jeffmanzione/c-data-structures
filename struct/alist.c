@@ -53,6 +53,19 @@ void alist_remove_last(AList *const e) {
   e->_len--;
 }
 
+void alist_remove_at(AList *const e, int index) {
+  ASSERT(NOT_NULL(e), index >= 0, index < e->_len);
+  if (index == e->_len - 1) {
+    alist_remove_last(e);
+    return;
+  }
+  char *dest = e->_arr + index * e->_obj_sz;
+  char *src = dest + e->_obj_sz;
+  char *end_of_alist = e->_arr + e->_len * e->_obj_sz;
+  memmove(dest, src, end_of_alist - src);
+  e->_len--;
+}
+
 void alist_finalize(AList *const e) {
   ASSERT(NOT_NULL(e), NOT_NULL(e->_arr));
   DEALLOC(e->_arr);

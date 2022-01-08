@@ -48,6 +48,9 @@ void *alist_add(AList *const a);
 // Removes the last element of the list.
 void alist_remove_last(AList *const a);
 
+// Removes the element at the given index in the list.
+void alist_remove_at(AList *const e, int index);
+
 // Returns a pointer to the item at index [i].
 void *alist_get(const AList *const a, uint32_t i);
 
