@@ -16,11 +16,29 @@ cc_library(
 )
 
 cc_library(
+    name = "slist",
+    srcs = ["slist.c"],
+    hdrs = ["slist.h"],
+    deps = [
+        ":alist",
+        "@memory_wrapper//alloc",
+        "@memory_wrapper//debug",
+        "@memory_wrapper//util",
+    ],
+)
+
+cc_binary(
+    name = "slist_test",
+    srcs = ["slist_test.c"],
+    deps = [":slist"],
+)
+
+cc_library(
     name = "keyed_list",
     srcs = ["keyed_list.c"],
     hdrs = ["keyed_list.h"],
     deps = [
-        ":alist",
+        ":slist",
         "@memory_wrapper//alloc",
         "@memory_wrapper//debug",
         "@memory_wrapper//struct:map",
