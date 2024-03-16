@@ -5,14 +5,14 @@
 // Created on: Jun 03, 2020
 //     Author: Jeff Manzione
 
-#include "struct/alist.h"
 #include "struct/map.h"
+#include "struct/slist.h"
 
-#define keyedlist_init(klist, type, table_sz) \
+#define keyedlist_init(klist, type, table_sz)                                  \
   __keyedlist_init((klist), #type, sizeof(type), (table_sz))
 
 typedef struct {
-  AList _list;
+  SList _list;
   Map _map;
 } KeyedList;
 
@@ -24,7 +24,6 @@ void *keyedlist_lookup(KeyedList *klist, const void *key);
 
 typedef struct {
   M_iter _iter;
-  AList *_list;
 } KL_iter;
 
 KL_iter keyedlist_iter(KeyedList *klist);
