@@ -1,5 +1,5 @@
-#ifndef STRUCT_SLIST_H_
-#define STRUCT_SLIST_H_
+#ifndef C_DATA_STRUCTURES_SLIST_H_
+#define C_DATA_STRUCTURES_SLIST_H_
 
 #include <stdint.h>
 
@@ -27,4 +27,4 @@ bool sl_has(SL_iter *iter);
 void sl_inc(SL_iter *iter);
 void *sl_value(SL_iter *iter);
 
-#endif /* STRUCT_SLIST_H_ */
+#endif /* C_DATA_STRUCTURES_SLIST_H_ */

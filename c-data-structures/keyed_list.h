@@ -1,5 +1,5 @@
-#ifndef STRUCT_KEYED_LIST_H_
-#define STRUCT_KEYED_LIST_H_
+#ifndef C_DATA_STRUCTURES_KEYED_LIST_H_
+#define C_DATA_STRUCTURES_KEYED_LIST_H_
 // keyed_list.h
 //
 // Created on: Jun 03, 2020
@@ -8,7 +8,7 @@
 #include "struct/map.h"
 #include "struct/slist.h"
 
-#define keyedlist_init(klist, type, table_sz)                                  \
+#define keyedlist_init(klist, type, table_sz) \
   __keyedlist_init((klist), #type, sizeof(type), (table_sz))
 
 typedef struct {
@@ -33,4 +33,4 @@ void kl_inc(KL_iter *iter);
 const void *kl_key(KL_iter *iter);
 const void *kl_value(KL_iter *iter);
 
-#endif /* STRUCT_KEYED_LIST_H_ */
+#endif /* C_DATA_STRUCTURES_KEYED_LIST_H_ */

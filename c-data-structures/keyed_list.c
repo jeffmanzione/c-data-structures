@@ -7,7 +7,7 @@
 
 #include "alloc/alloc.h"
 #include "debug/debug.h"
-#include "struct/struct_defaults.h"
+#include "struct/C_DATA_STRUCTURES_defaults.h"
 
 void __keyedlist_init(KeyedList *klist, const char type_name[], size_t type_sz,
                       size_t table_sz) {
