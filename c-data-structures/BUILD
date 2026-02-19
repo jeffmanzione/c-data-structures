@@ -26,10 +26,7 @@ cc_library(
     srcs = ["slist.c"],
     hdrs = ["slist.h"],
     deps = [
-        ":alist",
-        "@memory_wrapper//alloc",
-        "@memory_wrapper//debug",
-        "@memory_wrapper//util",
+        ":arraylike",
     ],
 )
 
@@ -43,5 +40,21 @@ cc_library(
         "@memory_wrapper//debug",
         "@memory_wrapper//struct:C_DATA_STRUCTURES_defaults",
         "@memory_wrapper//struct:map",
+    ],
+)
+
+cc_library(
+    name = "stable_arraylike",
+    hdrs = ["stable_arraylike.h"],
+)
+
+cc_test(
+    name = "stable_arraylike_test",
+    size = "small",
+    srcs = ["stable_arraylike_test.cc"],
+    deps = [
+        ":stable_arraylike",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
