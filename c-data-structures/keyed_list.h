@@ -1,5 +1,5 @@
-#ifndef C_DATA_STRUCTURES_KEYED_LIST_H_
-#define C_DATA_STRUCTURES_KEYED_LIST_H_
+#ifndef COM_GITHUB_JEFFMANZIONE_C_DATA_STRUCTURES_KEYED_LIST_H_
+#define COM_GITHUB_JEFFMANZIONE_C_DATA_STRUCTURES_KEYED_LIST_H_
 // keyed_list.h
 //
 // Created on: Jun 03, 2020
@@ -33,4 +33,4 @@ void kl_inc(KL_iter *iter);
 const void *kl_key(KL_iter *iter);
 const void *kl_value(KL_iter *iter);
 
-#endif /* C_DATA_STRUCTURES_KEYED_LIST_H_ */
+#endif /* COM_GITHUB_JEFFMANZIONE_C_DATA_STRUCTURES_KEYED_LIST_H_ */
