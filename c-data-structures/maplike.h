@@ -48,17 +48,30 @@ extern "C" {
 // value_type=Cat:
 //
 //   typedef struct {} CatHashMap;
+//   typedef struct {} CatHashMapPair;
+//   typedef struct {} CatHashMapIterator;
 //   typedef uint32_t (*CatHashMapHashFn)(const CatKey, uint32_t size);
 //   typedef int32_t (*CatHashMapCompareFn)(const CatKey, uint32_t, const
-//   CatKey, uint32_t); void CatHashMap_init(CatHashMap*, uint32_t capacity,
-//   CatHashMapHashFn, CatHashMapCompareFn);
-//   CatHashMap* CatHashMap_create(uint32_t capacity, CatHashMapHashFn,
+//                                          CatKey, uint32_t);
+//   void CatHashMap_init(CatHashMap*, uint32_t capacity,
+//                        CatHashMapHashFn, CatHashMapCompareFn);
+//   CatHashMap* CatHashMap_init_capacity(CatHashMap*, uint32_t capacity,
+//                                        CatHashMapHashFn,
+//                                        CatHashMapCompareFn);
+//   CatHashMap* CatHashMap_create(CatHashMapHashFn,
 //                                 CatHashMapCompareFn);
+//   CatHashMap* CatHashMap_create_capacity(uint32_t capacity, CatHashMapHashFn,
+//                                          CatHashMapCompareFn);
 //   void CatHashMap_finalize(CatHashMap*);
 //   void CatHashMap_delete(CatHashMap*);
-//   bool CatHashMap_insert(CatHashMap*, const CatKey, uint32_t,
-//   Cat**); Cat CatHashMap_remove(CatHashMap*, const CatKey, uint32_t, Cat*,
-//   uint32_t); bool CatHashMap_contains(CatHashMap*, const CatKey, uint32_t);
+//   bool CatHashMap_insert(CatHashMap*, const CatKey, uint32_t, const Cat);
+//   bool CatHashMap_remove(CatHashMap*, const CatKey, uint32_t, Cat*,
+//                          uint32_t);
+//   bool CatHashMap_contains(CatHashMap*, const CatKey, uint32_t);
+//   Cat CatHashMap_find(const CatHashMap *hash_map, const CatKey key,
+//                       uint32_t key_size, Cat default_value);
+//   Cat *CatHashMap_find_ref(const CatHashMap *hash_map,
+//                            const CatKey key, uint32_t key_size);
 //   uint32_t CatHashMap_size(CatHashMap*);
 #define DEFINE_MAPLIKE(name, key_type, value_type)                             \
                                                                                \
@@ -67,7 +80,6 @@ extern "C" {
                                      uint32_t);                                \
                                                                                \
   typedef struct name##Entry_ name##Entry;                                     \
-  typedef struct name##Iterator##_ name##Iterator;                             \
                                                                                \
   typedef struct {                                                             \
     name##HashFn hash;                                                         \
@@ -81,6 +93,10 @@ extern "C" {
     uint32_t key_size;                                                         \
     value_type value;                                                          \
   } name##Pair;                                                                \
+                                                                               \
+  typedef struct {                                                             \
+    name##Entry *cur;                                                          \
+  } name##Iterator;                                                            \
                                                                                \
   bool name##_init(name *hash_map, name##HashFn, name##CompareFn);             \
   bool name##_init_capacity(name *hash_map, uint32_t capacity, name##HashFn,   \
@@ -99,10 +115,13 @@ extern "C" {
   bool name##_remove(name *, const key_type key, uint32_t key_size,            \
                      value_type *target_if_removed, uint32_t target_size);     \
                                                                                \
-  bool name##_contains(const name *hash_map, const value_type value);          \
+  bool name##_contains(const name *hash_map, const key_type key,               \
+                       uint32_t key_size);                                     \
                                                                                \
-  value_type name##_find(const name *hash_map, const value_type value,         \
-                         value_type default_value);                            \
+  value_type name##_find(const name *hash_map, const key_type key,             \
+                         uint32_t key_size, value_type default_value);         \
+  value_type *name##_find_ref(const name *hash_map, const key_type key,        \
+                              uint32_t key_size);                              \
                                                                                \
   uint32_t name##_size(const name *);                                          \
                                                                                \
@@ -115,23 +134,8 @@ extern "C" {
   const value_type *name##_value(const name##Iterator *const);                 \
   value_type *name##_mutable_value(const name##Iterator *const)
 
-// Expands to the impleemtation for a hash set with the given name and value
+// Expands to the implementation for a hash set with the given name and value
 // type.
-//
-// Generates the following for name=CatHashMap and value_type=Cat:
-//
-//   void CatHashMap_init(CatHashMap*, uint32_t capacity, CatHashMapHashFn,
-//                        CatHashMapCompareFn) { ... }
-//   CatHashMap* CatHashMap_create(uint32_t capacity, CatHashMapHashFn,
-//                                 CatHashMapCompareFn) { ... }
-//   void CatHashMap_finalize(CatHashMap*) { ... }
-//   void CatHashMap_delete(CatHashMap*) { ... }
-//   bool CatHashMap_insert(CatHashMap*, const Cat, const CatKey key, uint32_t
-//   key_size,  const Cat value)) { ... } bool CatHashMap_remove(CatHashMap*,
-//   const Cat, uint32_t value_size) { ... } bool
-//   CatHashMap_contains(CatHashMap*, const Cat, uint32_t) { ... } Cat
-//   CatHashMap_find(CatHashMap*, const Cat, uint32_t value_size) { ... }
-//   uint32_t CatHashMap_size(CatHashMap*) { ... }
 #define IMPL_MAPLIKE(name, key_type, value_type)                               \
                                                                                \
   struct name##Entry_ {                                                        \
@@ -141,14 +145,11 @@ extern "C" {
     name##Entry *prev, *next;                                                  \
   };                                                                           \
                                                                                \
-  struct name##Iterator##_ {                                                   \
-    name##Entry *cur;                                                          \
-  };                                                                           \
-                                                                               \
   static bool name##_attempt_insert_internal(                                  \
-      name *hash_map, const key_type key, uint32_t key_size, value_type value, \
-      uint32_t hval, name##Entry *table, uint32_t capacity,                    \
-      name##Entry **first, name##Entry **last, bool *probe_limit_exceeded) {   \
+      name *hash_map, const key_type key, uint32_t key_size,                   \
+      const value_type value, uint32_t hval, name##Entry *table,               \
+      uint32_t capacity, name##Entry **first, name##Entry **last,              \
+      bool *probe_limit_exceeded) {                                            \
     int num_probes = 0;                                                        \
     int num_tombstones_encountered = 0;                                        \
     name##Entry *first_empty = NULL;                                           \
@@ -168,7 +169,7 @@ extern "C" {
         /* Take the vacant spot. */                                            \
         entry->pair.key = key;                                                 \
         entry->pair.key_size = key_size;                                       \
-        entry->pair.value = value;                                             \
+        entry->pair.value = (value_type)value;                                 \
         entry->hash_value = hval;                                              \
         entry->num_probes = num_probes;                                        \
         entry->prev = *last;                                                   \
@@ -203,7 +204,7 @@ extern "C" {
       if (hval == entry->hash_value) {                                         \
         if (hash_map->compare(key, key_size, entry->pair.key,                  \
                               entry->pair.key_size) == 0) {                    \
-          entry->pair.value = value;                                           \
+          entry->pair.value = (value_type)value;                               \
           return false;                                                        \
         }                                                                      \
       }                                                                        \
@@ -213,7 +214,7 @@ extern "C" {
         /* Take its spot. */                                                   \
         entry->pair.key = key;                                                 \
         entry->pair.key_size = key_size;                                       \
-        entry->pair.value = value;                                             \
+        entry->pair.value = (value_type)value;                                 \
         entry->hash_value = hval;                                              \
         entry->num_probes = num_probes;                                        \
         /* It is the new insertion. */                                         \
@@ -396,17 +397,27 @@ extern "C" {
     }                                                                          \
     return true;                                                               \
   }                                                                            \
+                                                                               \
   value_type name##_find(const name *hash_map, const key_type key,             \
                          uint32_t key_size, value_type default_value) {        \
-    if (hash_map->table == NULL) {                                             \
+    value_type *found = name##_find_ref(hash_map, key, key_size);              \
+    if (found == NULL) {                                                       \
       return default_value;                                                    \
+    }                                                                          \
+    return *found;                                                             \
+  }                                                                            \
+                                                                               \
+  value_type *name##_find_ref(const name *hash_map, const key_type key,        \
+                              uint32_t key_size) {                             \
+    if (hash_map->table == NULL) {                                             \
+      return NULL;                                                             \
     }                                                                          \
     name##Entry *entry = name##_find_entry(                                    \
         hash_map, key, key_size, hash_map->table, hash_map->capacity);         \
     if (entry == NULL) {                                                       \
-      return default_value;                                                    \
+      return NULL;                                                             \
     }                                                                          \
-    return entry->pair.value;                                                  \
+    return &entry->pair.value;                                                 \
   }                                                                            \
                                                                                \
   uint32_t name##_size(const name *hash_map) { return hash_map->num_entries; } \
@@ -434,7 +445,7 @@ extern "C" {
   }                                                                            \
                                                                                \
   const value_type *name##_value(const name##Iterator *const it) {             \
-    return &it->cur->pair.value;                                               \
+    return (const value_type *)&it->cur->pair.value;                           \
   }                                                                            \
                                                                                \
   value_type *name##_mutable_value(const name##Iterator *const it) {           \
