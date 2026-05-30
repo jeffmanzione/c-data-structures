@@ -1,6 +1,6 @@
 PROJECT="jeffmanzione_c_data_structures"
-TAG="v0.0.x"
-VERSION="0.0.0"
+TAG="v1.0.x"
+VERSION="1.0.3"
 
 git archive \
     --format=zip \
