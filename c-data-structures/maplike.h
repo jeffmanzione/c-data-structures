@@ -113,7 +113,7 @@ extern "C" {
                      const value_type value);                                  \
                                                                                \
   bool name##_remove(name *, const key_type key, uint32_t key_size,            \
-                     value_type *target_if_removed, uint32_t target_size);     \
+                     value_type *target_if_removed);                           \
                                                                                \
   bool name##_contains(const name *hash_map, const key_type key,               \
                        uint32_t key_size);                                     \
