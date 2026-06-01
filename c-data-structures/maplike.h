@@ -11,35 +11,35 @@ extern "C" {
 #define MIN_(a, b) ((a) > (b) ? b : a)
 
 // A decent small prime number to use as the starting size for the hashtable
-#define DEFAULT_TABLE_SIZE 31
+#define MAPLIKE_DEFAULT_TABLE_SIZE 31
 
 // Find the table position of a hash value.
-#define LOOKUP_HASH_POSITION(hval, num_probes, capacity) \
+#define MAPLIKE_LOOKUP_HASH_POSITION(hval, num_probes, capacity) \
   (((hval) + ((num_probes) * (num_probes))) % (capacity))
 
 // Calculates a new reasonable size of the hash table given a current size.
-#define CALCULATE_NEW_TABLE_SIZE(current_size) (((current_size)*2) + 1)
+#define MAPLIKE_CALCULATE_NEW_TABLE_SIZE(current_size) (((current_size)*2) + 1)
 
 // Calculates the threshold for number of entries in the given hash table size
 // before it efficieny starts to diminish and the table should be
 // resized/rehashed.
-#define CALCULATE_RESIZE_THRESHOLD(capacity) ((int)((capacity) / 2.f))
+#define MAPLIKE_CALCULATE_RESIZE_THRESHOLD(capacity) ((int)((capacity) / 2.f))
 
 // Value for num_probes on a hash table entry when it has been tombstoned, i.e.,
 // previously contained a value that was subsquently removed.
-#define TOMBSTONE -1
+#define MAPLIKE_TOMBSTONE -1
 
 // True if entry is a tombstone, i.e., previously contained a value that was
 // subsequently removed, false otherwise.
-#define IS_TOMBSTONE(entry) ((entry)->num_probes == -1)
+#define MAPLIKE_IS_TOMBSTONE(entry) ((entry)->num_probes == -1)
 
 // True if entry currently has no value and did not previously, false
 // otherwise.
-#define IS_EMPTY(entry) ((entry)->num_probes == 0)
+#define MAPLIKE_IS_EMPTY(entry) ((entry)->num_probes == 0)
 
 // The max number of probes search for a value in the hash table before there is
 // a clear performance bottleneck w.r.t. the size of the hash table.
-#define MAX_PROBES_THRESHOLD(capacity) ((int)((capacity) / 2))
+#define MAPLIKE_MAX_PROBES_THRESHOLD(capacity) ((int)((capacity) / 2))
 
 // Expands to the header definitions for a hash set with the given name and
 // value type.
@@ -156,7 +156,7 @@ extern "C" {
     int num_probes_at_first_empty = -1;                                        \
     while (true) {                                                             \
       const int hash_position =                                                \
-          LOOKUP_HASH_POSITION(hval, num_probes, capacity);                    \
+          MAPLIKE_LOOKUP_HASH_POSITION(hval, num_probes, capacity);            \
       num_probes++;                                                            \
       name##Entry *entry = table + hash_position;                              \
       /* Position is vacant. */                                                \
@@ -185,11 +185,12 @@ extern "C" {
       }                                                                        \
       /* Spot is vacant but previously used, mark it so we can use it later.   \
        */                                                                      \
-      if (IS_TOMBSTONE(entry)) {                                               \
+      if (MAPLIKE_IS_TOMBSTONE(entry)) {                                       \
         num_tombstones_encountered++;                                          \
         /* Returns early if there is a severe performance bottleneck so the    \
          * table can be rehashed. */                                           \
-        if (num_tombstones_encountered > MAX_PROBES_THRESHOLD(capacity)) {     \
+        if (num_tombstones_encountered >                                       \
+            MAPLIKE_MAX_PROBES_THRESHOLD(capacity)) {                          \
           *probe_limit_exceeded = true;                                        \
           return false;                                                        \
         }                                                                      \
@@ -231,7 +232,7 @@ extern "C" {
                                                                                \
   static void name##_resize_table(name *hash_map) {                            \
     const uint32_t new_capacity =                                              \
-        CALCULATE_NEW_TABLE_SIZE(hash_map->capacity);                          \
+        MAPLIKE_CALCULATE_NEW_TABLE_SIZE(hash_map->capacity);                  \
     name##Entry *new_table =                                                   \
         (name##Entry *)calloc(sizeof(name##Entry), new_capacity);              \
     name##Entry *new_first = NULL;                                             \
@@ -254,7 +255,8 @@ extern "C" {
     hash_map->capacity = new_capacity;                                         \
     hash_map->first = new_first;                                               \
     hash_map->last = new_last;                                                 \
-    hash_map->resize_threshold = CALCULATE_RESIZE_THRESHOLD(new_capacity);     \
+    hash_map->resize_threshold =                                               \
+        MAPLIKE_CALCULATE_RESIZE_THRESHOLD(new_capacity);                      \
   }                                                                            \
                                                                                \
   name *name##_create_capacity(uint32_t capacity, name##HashFn hash,           \
@@ -265,7 +267,7 @@ extern "C" {
   }                                                                            \
                                                                                \
   name *name##_create(name##HashFn hash, name##CompareFn compare) {            \
-    return name##_create_capacity(DEFAULT_TABLE_SIZE, hash, compare);          \
+    return name##_create_capacity(MAPLIKE_DEFAULT_TABLE_SIZE, hash, compare);  \
   }                                                                            \
                                                                                \
   bool name##_init_capacity(name *hash_map, uint32_t capacity,                 \
@@ -276,7 +278,7 @@ extern "C" {
     hash_map->hash = hash;                                                     \
     hash_map->compare = compare;                                               \
     hash_map->capacity = capacity;                                             \
-    hash_map->resize_threshold = CALCULATE_RESIZE_THRESHOLD(capacity);         \
+    hash_map->resize_threshold = MAPLIKE_CALCULATE_RESIZE_THRESHOLD(capacity); \
     hash_map->table = NULL;                                                    \
     hash_map->first = NULL;                                                    \
     hash_map->last = NULL;                                                     \
@@ -286,7 +288,8 @@ extern "C" {
                                                                                \
   bool name##_init(name *hash_map, name##HashFn hash,                          \
                    name##CompareFn compare) {                                  \
-    return name##_init_capacity(hash_map, DEFAULT_TABLE_SIZE, hash, compare);  \
+    return name##_init_capacity(hash_map, MAPLIKE_DEFAULT_TABLE_SIZE, hash,    \
+                                compare);                                      \
   }                                                                            \
                                                                                \
   void name##_finalize(name *hash_map) {                                       \
@@ -339,13 +342,14 @@ extern "C" {
     const uint32_t hval = hash_map->hash(key, key_size);                       \
     int num_probes = 0;                                                        \
     while (true) {                                                             \
-      int table_index = LOOKUP_HASH_POSITION(hval, num_probes, capacity);      \
+      int table_index =                                                        \
+          MAPLIKE_LOOKUP_HASH_POSITION(hval, num_probes, capacity);            \
       ++num_probes;                                                            \
       name##Entry *entry = table + table_index;                                \
-      if (IS_EMPTY(entry)) {                                                   \
+      if (MAPLIKE_IS_EMPTY(entry)) {                                           \
         return NULL;                                                           \
       }                                                                        \
-      if (IS_TOMBSTONE(entry)) {                                               \
+      if (MAPLIKE_IS_TOMBSTONE(entry)) {                                       \
         continue;                                                              \
       }                                                                        \
       if (hval == entry->hash_value) {                                         \
@@ -380,7 +384,7 @@ extern "C" {
     } else {                                                                   \
       entry->prev->next = entry->next;                                         \
     }                                                                          \
-    entry->num_probes = TOMBSTONE;                                             \
+    entry->num_probes = MAPLIKE_TOMBSTONE;                                     \
     hash_map->num_entries--;                                                   \
     return true;                                                               \
   }                                                                            \

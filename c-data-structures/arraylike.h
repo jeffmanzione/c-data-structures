@@ -35,7 +35,7 @@ extern "C" {
  *
  * Memory management:
  *  - The array owns a contiguous heap buffer (`table`)
- *  - Capacity grows in fixed-size chunks (DEFAULT_TABLE_SIZE)
+ *  - Capacity grows in fixed-size chunks (ARRAYLIKE_DEFAULT_TABLE_SIZE)
  *  - Shrinking does not reduce capacity, only logical size
  *
  * Error handling:
@@ -68,7 +68,7 @@ extern "C" {
  * All allocations are rounded up to a multiple of this value. This keeps
  * growth predictable and avoids frequent reallocations for small increments.
  */
-#define DEFAULT_TABLE_SIZE 8
+#define ARRAYLIKE_DEFAULT_TABLE_SIZE 8
 
 /**
  * @macro DEFINE_ARRAYLIKE
@@ -144,8 +144,8 @@ extern "C" {
   type *name##_set_ref_unchecked(name *const array, int32_t index);           \
                                                                               \
   /* Random access lookup */                                                  \
-  bool name##_get(name *const, int32_t, type *ptr);                           \
-  type name##_get_unchecked(name *const, int32_t);                            \
+  bool name##_get(const name *const, int32_t, type *ptr);                     \
+  type name##_get_unchecked(const name *const, int32_t);                      \
   bool name##_get_ref(name *const, int32_t, const type **ptr);                \
   bool name##_mutable_ref(name *const, int32_t, type **ptr);                  \
   const type *name##_get_ref_unchecked(name *const, int32_t);                 \
@@ -202,7 +202,7 @@ extern "C" {
   }                                                                            \
                                                                                \
   bool name##_init(name *array) {                                              \
-    return name##_init_capacity(array, DEFAULT_TABLE_SIZE);                    \
+    return name##_init_capacity(array, ARRAYLIKE_DEFAULT_TABLE_SIZE);          \
   }                                                                            \
                                                                                \
   name *name##_create() {                                                      \
@@ -222,9 +222,10 @@ extern "C" {
   name *name##_create_copy(const type input[], size_t capacity) {              \
     name *array = (name *)malloc(sizeof(name));                                \
     assert(array != NULL);                                                     \
-    name##_init_capacity(                                                      \
-        array, ((capacity + DEFAULT_TABLE_SIZE - 1) / DEFAULT_TABLE_SIZE) *    \
-                   DEFAULT_TABLE_SIZE);                                        \
+    name##_init_capacity(array,                                                \
+                         ((capacity + ARRAYLIKE_DEFAULT_TABLE_SIZE - 1) /      \
+                          ARRAYLIKE_DEFAULT_TABLE_SIZE) *                      \
+                             ARRAYLIKE_DEFAULT_TABLE_SIZE);                    \
     memmove(array->table, input, capacity * sizeof(type));                     \
     array->size = capacity;                                                    \
     return array;                                                              \
@@ -245,8 +246,9 @@ extern "C" {
                                      size_t need_to_accomodate) {              \
     assert(array != NULL);                                                     \
     size_t new_capacity =                                                      \
-        ((need_to_accomodate + DEFAULT_TABLE_SIZE - 1) / DEFAULT_TABLE_SIZE) * \
-        DEFAULT_TABLE_SIZE;                                                    \
+        ((need_to_accomodate + ARRAYLIKE_DEFAULT_TABLE_SIZE - 1) /             \
+         ARRAYLIKE_DEFAULT_TABLE_SIZE) *                                       \
+        ARRAYLIKE_DEFAULT_TABLE_SIZE;                                          \
     if (new_capacity <= array->capacity) {                                     \
       return;                                                                  \
     }                                                                          \
@@ -402,7 +404,7 @@ extern "C" {
     return &array->table[index];                                               \
   }                                                                            \
                                                                                \
-  bool name##_get(name *const array, int32_t index, type *ptr) {               \
+  bool name##_get(const name *const array, int32_t index, type *ptr) {         \
     assert(array != NULL);                                                     \
     if (index < 0 || (size_t)index >= array->size) {                           \
       return false;                                                            \
@@ -411,7 +413,7 @@ extern "C" {
     return true;                                                               \
   }                                                                            \
                                                                                \
-  type name##_get_unchecked(name *const array, int32_t index) {                \
+  type name##_get_unchecked(const name *const array, int32_t index) {          \
     assert(array != NULL);                                                     \
     return array->table[index];                                                \
   }                                                                            \
@@ -528,10 +530,10 @@ extern "C" {
     return true;                                                               \
   }                                                                            \
                                                                                \
-  void name##_iterator(name##Iterator *iter, name *const array) {              \
+  void name##_iterator(name##Iterator *iter, const name *const array) {        \
     assert(iter != NULL && array != NULL);                                     \
     iter->index = 0;                                                           \
-    iter->array = array;                                                       \
+    iter->array = (name *)array;                                               \
   }                                                                            \
                                                                                \
   bool name##_has_next(const name##Iterator *const iter) {                     \
