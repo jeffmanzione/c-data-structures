@@ -170,7 +170,7 @@ extern "C" {
                            int32_t tail_range_start, int32_t tail_range_end); \
                                                                               \
   /* Iteration */                                                             \
-  void name##_iterator(name##Iterator *, name *const);                        \
+  void name##_iterator(name##Iterator *, const name *const);                  \
   bool name##_has_next(const name##Iterator *const);                          \
   void name##_next(name##Iterator *);                                         \
   const type *name##_value(const name##Iterator *const);                      \
@@ -295,7 +295,7 @@ extern "C" {
       name##_shift_right(array, 0, 1);                                         \
     }                                                                          \
     array->size++;                                                             \
-    return array->table;                                                       \
+    return (type *)array->table;                                               \
   }                                                                            \
                                                                                \
   type name##_pop_front_unchecked(name *const array) {                         \
@@ -330,7 +330,7 @@ extern "C" {
   type *name##_push_back_ref(name *const array) {                              \
     assert(array != NULL);                                                     \
     name##_ensure_capacity(array, array->size + 1);                            \
-    return array->table + array->size++;                                       \
+    return (type *)(array->table + array->size++);                             \
   }                                                                            \
                                                                                \
   type name##_pop_back_unchecked(name *const array) {                          \
@@ -401,7 +401,7 @@ extern "C" {
       name##_ensure_capacity(array, index + 1);                                \
       array->size = index + 1;                                                 \
     }                                                                          \
-    return &array->table[index];                                               \
+    return (type *)&array->table[index];                                       \
   }                                                                            \
                                                                                \
   bool name##_get(const name *const array, int32_t index, type *ptr) {         \
@@ -422,7 +422,7 @@ extern "C" {
     if (index < 0 || (size_t)index >= array->size) {                           \
       return false;                                                            \
     }                                                                          \
-    *ptr = &array->table[index];                                               \
+    *ptr = (const type *)&array->table[index];                                 \
     return true;                                                               \
   }                                                                            \
                                                                                \
@@ -436,12 +436,12 @@ extern "C" {
   }                                                                            \
                                                                                \
   const type *name##_get_ref_unchecked(name *const array, int32_t index) {     \
-    return name##_mutable_ref_unchecked(array, index);                         \
+    return (const type *)name##_mutable_ref_unchecked(array, index);           \
   }                                                                            \
                                                                                \
   type *name##_mutable_ref_unchecked(name *const array, int32_t index) {       \
     assert(array != NULL);                                                     \
-    return &array->table[index];                                               \
+    return (type *)&array->table[index];                                       \
   }                                                                            \
                                                                                \
   bool name##_last(name *const array, type *ptr) {                             \
@@ -461,7 +461,8 @@ extern "C" {
                                                                                \
   const type *name##_last_ref_unchecked(name *const array) {                   \
     assert(array != NULL);                                                     \
-    return name##_get_ref_unchecked(array, name##_size(array) - 1);            \
+    return (const type *)name##_get_ref_unchecked(array,                       \
+                                                  name##_size(array) - 1);     \
   }                                                                            \
                                                                                \
   bool name##_remove(name *const array, int32_t index, type *ptr) {            \
@@ -548,12 +549,12 @@ extern "C" {
                                                                                \
   const type *name##_value(const name##Iterator *const iter) {                 \
     assert(iter != NULL);                                                      \
-    return name##_get_ref_unchecked(iter->array, iter->index);                 \
+    return (const type *)name##_get_ref_unchecked(iter->array, iter->index);   \
   }                                                                            \
                                                                                \
   type *name##_mutable_value(const name##Iterator *const iter) {               \
     assert(iter != NULL);                                                      \
-    return name##_mutable_ref_unchecked(iter->array, iter->index);             \
+    return (type *)name##_mutable_ref_unchecked(iter->array, iter->index);     \
   }
 
 #ifdef __cplusplus
