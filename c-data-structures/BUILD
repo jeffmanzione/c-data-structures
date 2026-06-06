@@ -72,3 +72,19 @@ cc_test(
         "@googletest//:gtest_main",
     ],
 )
+
+cc_library(
+    name = "setlike",
+    hdrs = ["setlike.h"],
+)
+
+cc_test(
+    name = "setlike_test",
+    size = "small",
+    srcs = ["setlike_test.cc"],
+    deps = [
+        ":setlike",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
