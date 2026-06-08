@@ -1,8 +1,10 @@
 #include "c-data-structures/maplike.h"
 
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 namespace {
+using testing::NotNull;
 
 /* Instantiate a map type for testing */
 DEFINE_MAPLIKE(StringToIntMap, char*, int);
@@ -11,13 +13,6 @@ IMPL_MAPLIKE(StringToIntMap, char*, int);
 // https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function
 #define FNV_32_PRIME (0x01000193)
 #define FNV_1A_32_OFFSET (0x811C9DC5)
-
-uint32_t hash_int32(const int32_t num, uint32_t size) { return (uint32_t)num; }
-
-int32_t compare_int32s(const int32_t num1, uint32_t size1, const int32_t num2,
-                       uint32_t size2) {
-  return num1 - num2;
-}
 
 uint32_t hash_string(const char* ptr, uint32_t size) {
   unsigned char* s = (unsigned char*)ptr;
@@ -74,6 +69,21 @@ TEST(StringToIntMapStandaloneTest, InitWithZeroCapacityFails) {
       StringToIntMap_init_capacity(&map, 0, hash_string, compare_strings));
 }
 
+TEST(StringToIntMapStandaloneTest, Create) {
+  StringToIntMap* map = StringToIntMap_create(hash_string, compare_strings);
+  EXPECT_THAT(map, NotNull());
+  EXPECT_EQ(StringToIntMap_size(map), 0u);
+  StringToIntMap_delete(map);
+}
+
+TEST(StringToIntMapStandaloneTest, CreateWithCapacity) {
+  StringToIntMap* map =
+      StringToIntMap_create_capacity(16, hash_string, compare_strings);
+  EXPECT_THAT(map, NotNull());
+  EXPECT_EQ(map->capacity, 16u);
+  EXPECT_EQ(StringToIntMap_size(map), 0u);
+  StringToIntMap_delete(map);
+}
 // /* -------------------------------------------------------------
 //  * Insert / Remove
 //  * ------------------------------------------------------------- */
@@ -210,24 +220,43 @@ TEST_F(StringToIntMapTest, Iterator) {
   StringToIntMapIterator it;
   StringToIntMap_iterator(&it, &map);
   EXPECT_TRUE(StringToIntMap_has_entry(&it));
-  StringToIntMapPair* kv = StringToIntMap_entry(&it);
-  EXPECT_EQ(kv->key, "a");
+  const StringToIntMapPair* kv = StringToIntMap_entry(&it);
+  StringToIntMapPair* mkv = StringToIntMap_mutable_entry(&it);
+  EXPECT_STREQ(StringToIntMap_key(&it), "a");
+  EXPECT_STREQ(kv->key, "a");
   EXPECT_EQ(kv->key_size, strlen("a"));
   EXPECT_EQ(kv->value, 10);
+  EXPECT_STREQ(mkv->key, "a");
+  EXPECT_EQ(mkv->key_size, strlen("a"));
+  EXPECT_EQ(mkv->value, 10);
+  EXPECT_EQ(*StringToIntMap_value(&it), 10);
+  EXPECT_EQ(*StringToIntMap_mutable_value(&it), 10);
   StringToIntMap_next_entry(&it);
 
   EXPECT_TRUE(StringToIntMap_has_entry(&it));
   kv = StringToIntMap_entry(&it);
-  EXPECT_EQ(kv->key, "b");
+  mkv = StringToIntMap_mutable_entry(&it);
+  EXPECT_STREQ(StringToIntMap_key(&it), "b");
+  EXPECT_STREQ(kv->key, "b");
   EXPECT_EQ(kv->key_size, strlen("b"));
   EXPECT_EQ(kv->value, 20);
+  EXPECT_STREQ(mkv->key, "b");
+  EXPECT_EQ(mkv->key_size, strlen("b"));
+  EXPECT_EQ(mkv->value, 20);
+  EXPECT_EQ(*StringToIntMap_mutable_value(&it), 20);
   StringToIntMap_next_entry(&it);
 
   EXPECT_TRUE(StringToIntMap_has_entry(&it));
   kv = StringToIntMap_entry(&it);
-  EXPECT_EQ(kv->key, "c");
+  mkv = StringToIntMap_mutable_entry(&it);
+  EXPECT_STREQ(StringToIntMap_key(&it), "c");
+  EXPECT_STREQ(kv->key, "c");
   EXPECT_EQ(kv->key_size, strlen("c"));
   EXPECT_EQ(kv->value, 30);
+  EXPECT_STREQ(mkv->key, "c");
+  EXPECT_EQ(mkv->key_size, strlen("c"));
+  EXPECT_EQ(mkv->value, 30);
+  EXPECT_EQ(*StringToIntMap_mutable_value(&it), 30);
   StringToIntMap_next_entry(&it);
 
   EXPECT_FALSE(StringToIntMap_has_entry(&it));

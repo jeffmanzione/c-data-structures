@@ -128,8 +128,8 @@ extern "C" {
   void name##_iterator(name##Iterator *, name *const);                         \
   bool name##_has_entry(const name##Iterator *const);                          \
   void name##_next_entry(name##Iterator *);                                    \
-  name##Pair *name##_entry(const name##Iterator *const);                       \
-  const name##Pair *name##_mutable_entry(const name##Iterator *const);         \
+  const name##Pair *name##_entry(const name##Iterator *const);                 \
+  name##Pair *name##_mutable_entry(name##Iterator *);                          \
   const key_type name##_key(const name##Iterator *const);                      \
   const value_type *name##_value(const name##Iterator *const);                 \
   value_type *name##_mutable_value(const name##Iterator *const)
@@ -146,10 +146,9 @@ extern "C" {
   };                                                                           \
                                                                                \
   static bool name##_attempt_insert_internal(                                  \
-      name *hash_map, const key_type key, uint32_t key_size,                   \
-      const value_type value, uint32_t hval, name##Entry *table,               \
-      uint32_t capacity, name##Entry **first, name##Entry **last,              \
-      bool *probe_limit_exceeded) {                                            \
+      name *hash_map, key_type key, uint32_t key_size, value_type value,       \
+      uint32_t hval, name##Entry *table, uint32_t capacity,                    \
+      name##Entry **first, name##Entry **last, bool *probe_limit_exceeded) {   \
     int num_probes = 0;                                                        \
     int num_tombstones_encountered = 0;                                        \
     name##Entry *first_empty = NULL;                                           \
@@ -219,9 +218,9 @@ extern "C" {
         entry->hash_value = hval;                                              \
         entry->num_probes = num_probes;                                        \
         /* It is the new insertion. */                                         \
-        key = tmp_entry.pair.key;                                              \
+        key = (key_type)tmp_entry.pair.key;                                    \
         key_size = tmp_entry.pair.key_size;                                    \
-        value = tmp_entry.pair.value;                                          \
+        value = (value_type)tmp_entry.pair.value;                              \
         hval = tmp_entry.hash_value;                                           \
         num_probes = tmp_entry.num_probes;                                     \
         first_empty = NULL;                                                    \
@@ -242,9 +241,9 @@ extern "C" {
          entry = entry->next) {                                                \
       bool probe_limit_exceeded = false;                                       \
       name##_attempt_insert_internal(                                          \
-          hash_map, entry->pair.key, entry->pair.key_size, entry->pair.value,  \
-          entry->hash_value, new_table, new_capacity, &new_first, &new_last,   \
-          &probe_limit_exceeded);                                              \
+          hash_map, (key_type)entry->pair.key, entry->pair.key_size,           \
+          (value_type)entry->pair.value, entry->hash_value, new_table,         \
+          new_capacity, &new_first, &new_last, &probe_limit_exceeded);         \
       if (probe_limit_exceeded) {                                              \
         /* Should never happen */                                              \
       }                                                                        \
@@ -314,18 +313,18 @@ extern "C" {
     }                                                                          \
     bool probe_limit_exceeded = false;                                         \
     bool was_inserted = name##_attempt_insert_internal(                        \
-        hash_map, key, key_size, value, hash_map->hash(key, key_size),         \
-        hash_map->table, hash_map->capacity, &hash_map->first,                 \
-        &hash_map->last, &probe_limit_exceeded);                               \
+        hash_map, (key_type)key, key_size, (value_type)value,                  \
+        hash_map->hash(key, key_size), hash_map->table, hash_map->capacity,    \
+        &hash_map->first, &hash_map->last, &probe_limit_exceeded);             \
     /* Maps may have a lot of removed spots. If this causes a performance      \
      * slowdown, then it is better to rehash the map. */                       \
     if (probe_limit_exceeded) {                                                \
       name##_resize_table(hash_map);                                           \
       probe_limit_exceeded = false;                                            \
       was_inserted = name##_attempt_insert_internal(                           \
-          hash_map, key, key_size, value, hash_map->hash(key, key_size),       \
-          hash_map->table, hash_map->capacity, &hash_map->first,               \
-          &hash_map->last, &probe_limit_exceeded);                             \
+          hash_map, (key_type)key, key_size, (value_type)value,                \
+          hash_map->hash(key, key_size), hash_map->table, hash_map->capacity,  \
+          &hash_map->first, &hash_map->last, &probe_limit_exceeded);           \
       if (probe_limit_exceeded) {                                              \
         /* This should never happen. */                                        \
       }                                                                        \
@@ -436,11 +435,11 @@ extern "C" {
                                                                                \
   void name##_next_entry(name##Iterator *it) { it->cur = it->cur->next; }      \
                                                                                \
-  name##Pair *name##_entry(const name##Iterator *const it) {                   \
+  const name##Pair *name##_entry(const name##Iterator *const it) {             \
     return &it->cur->pair;                                                     \
   }                                                                            \
                                                                                \
-  const name##Pair *name##_mutable_entry(const name##Iterator *const it) {     \
+  name##Pair *name##_mutable_entry(name##Iterator *it) {                       \
     return &it->cur->pair;                                                     \
   }                                                                            \
                                                                                \
