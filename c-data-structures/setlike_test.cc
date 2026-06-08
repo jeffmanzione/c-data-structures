@@ -2,12 +2,15 @@ extern "C" {
 #include "c-data-structures/setlike.h"
 }
 
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <stdint.h>
 
 #include <algorithm>
 
 namespace {
+using testing::IsNull;
+using testing::NotNull;
 
 DEFINE_SETLIKE(Int32HashSet, int32_t);
 IMPL_SETLIKE(Int32HashSet, int32_t);
@@ -65,11 +68,11 @@ TEST(Int32HashSetTest, Insert) {
   Int32HashSet hash_set;
   Int32HashSet_init(&hash_set, hash_int32, compare_int32s);
   // Insert
-  ASSERT_TRUE(Int32HashSet_insert(&hash_set, 10, sizeof(int32_t)));
+  EXPECT_TRUE(Int32HashSet_insert(&hash_set, 10, sizeof(int32_t)));
 
   // Verify
-  ASSERT_TRUE(Int32HashSet_contains(&hash_set, 10, sizeof(int32_t)));
-  ASSERT_FALSE(Int32HashSet_contains(&hash_set, 50, sizeof(int32_t)));
+  EXPECT_TRUE(Int32HashSet_contains(&hash_set, 10, sizeof(int32_t)));
+  EXPECT_FALSE(Int32HashSet_contains(&hash_set, 50, sizeof(int32_t)));
 
   Int32HashSet_finalize(&hash_set);
 }
@@ -79,26 +82,26 @@ TEST(Int32HashSetTest, InsertN) {
   Int32HashSet_init(&hash_set, hash_int32, compare_int32s);
 
   // Insert
-  ASSERT_TRUE(Int32HashSet_insert(&hash_set, 10, sizeof(int32_t)));
-  ASSERT_TRUE(Int32HashSet_insert(&hash_set, 20, sizeof(int32_t)));
-  ASSERT_TRUE(Int32HashSet_insert(&hash_set, 30, sizeof(int32_t)));
-  ASSERT_TRUE(Int32HashSet_insert(&hash_set, 40, sizeof(int32_t)));
-  ASSERT_TRUE(Int32HashSet_insert(&hash_set, 50, sizeof(int32_t)));
-  ASSERT_TRUE(Int32HashSet_insert(&hash_set, 60, sizeof(int32_t)));
-  ASSERT_TRUE(Int32HashSet_insert(&hash_set, 70, sizeof(int32_t)));
+  EXPECT_TRUE(Int32HashSet_insert(&hash_set, 10, sizeof(int32_t)));
+  EXPECT_TRUE(Int32HashSet_insert(&hash_set, 20, sizeof(int32_t)));
+  EXPECT_TRUE(Int32HashSet_insert(&hash_set, 30, sizeof(int32_t)));
+  EXPECT_TRUE(Int32HashSet_insert(&hash_set, 40, sizeof(int32_t)));
+  EXPECT_TRUE(Int32HashSet_insert(&hash_set, 50, sizeof(int32_t)));
+  EXPECT_TRUE(Int32HashSet_insert(&hash_set, 60, sizeof(int32_t)));
+  EXPECT_TRUE(Int32HashSet_insert(&hash_set, 70, sizeof(int32_t)));
 
   // Verify
-  ASSERT_TRUE(Int32HashSet_contains(&hash_set, 10, sizeof(int32_t)));
-  ASSERT_TRUE(Int32HashSet_contains(&hash_set, 20, sizeof(int32_t)));
-  ASSERT_TRUE(Int32HashSet_contains(&hash_set, 30, sizeof(int32_t)));
-  ASSERT_TRUE(Int32HashSet_contains(&hash_set, 40, sizeof(int32_t)));
-  ASSERT_TRUE(Int32HashSet_contains(&hash_set, 50, sizeof(int32_t)));
-  ASSERT_TRUE(Int32HashSet_contains(&hash_set, 60, sizeof(int32_t)));
-  ASSERT_TRUE(Int32HashSet_contains(&hash_set, 70, sizeof(int32_t)));
+  EXPECT_TRUE(Int32HashSet_contains(&hash_set, 10, sizeof(int32_t)));
+  EXPECT_TRUE(Int32HashSet_contains(&hash_set, 20, sizeof(int32_t)));
+  EXPECT_TRUE(Int32HashSet_contains(&hash_set, 30, sizeof(int32_t)));
+  EXPECT_TRUE(Int32HashSet_contains(&hash_set, 40, sizeof(int32_t)));
+  EXPECT_TRUE(Int32HashSet_contains(&hash_set, 50, sizeof(int32_t)));
+  EXPECT_TRUE(Int32HashSet_contains(&hash_set, 60, sizeof(int32_t)));
+  EXPECT_TRUE(Int32HashSet_contains(&hash_set, 70, sizeof(int32_t)));
 
-  ASSERT_FALSE(Int32HashSet_contains(&hash_set, 75, sizeof(int32_t)));
-  ASSERT_FALSE(Int32HashSet_contains(&hash_set, 85, sizeof(int32_t)));
-  ASSERT_FALSE(Int32HashSet_contains(&hash_set, 95, sizeof(int32_t)));
+  EXPECT_FALSE(Int32HashSet_contains(&hash_set, 75, sizeof(int32_t)));
+  EXPECT_FALSE(Int32HashSet_contains(&hash_set, 85, sizeof(int32_t)));
+  EXPECT_FALSE(Int32HashSet_contains(&hash_set, 95, sizeof(int32_t)));
 
   Int32HashSet_finalize(&hash_set);
 }
@@ -108,17 +111,28 @@ TEST(Int32HashSetTest, Remove) {
   Int32HashSet_init(&hash_set, hash_int32, compare_int32s);
 
   // Insert
-  ASSERT_TRUE(Int32HashSet_insert(&hash_set, 10, sizeof(int32_t)));
-  ASSERT_TRUE(Int32HashSet_contains(&hash_set, 10, sizeof(int32_t)));
-  ASSERT_FALSE(Int32HashSet_contains(&hash_set, 20, sizeof(int32_t)));
+  EXPECT_TRUE(Int32HashSet_insert(&hash_set, 10, sizeof(int32_t)));
+  EXPECT_TRUE(Int32HashSet_contains(&hash_set, 10, sizeof(int32_t)));
+  EXPECT_EQ(Int32HashSet_find(&hash_set, 10, sizeof(int32_t), -1), 10);
+  EXPECT_THAT(Int32HashSet_find_ref(&hash_set, 10, sizeof(int32_t)), NotNull());
+  EXPECT_EQ(*Int32HashSet_find_ref(&hash_set, 10, sizeof(int32_t)), 10);
+  EXPECT_FALSE(Int32HashSet_contains(&hash_set, 20, sizeof(int32_t)));
+  EXPECT_EQ(Int32HashSet_find(&hash_set, 20, sizeof(int32_t), -1), -1);
+  EXPECT_THAT(Int32HashSet_find_ref(&hash_set, 20, sizeof(int32_t)), IsNull());
 
   // Remove
-  ASSERT_TRUE(Int32HashSet_remove(&hash_set, 10, sizeof(int32_t)));
-  ASSERT_FALSE(Int32HashSet_remove(&hash_set, 20, sizeof(int32_t)));
+  EXPECT_TRUE(Int32HashSet_remove(&hash_set, 10, sizeof(int32_t)));
+  EXPECT_FALSE(Int32HashSet_remove(&hash_set, 20, sizeof(int32_t)));
 
   // Verify
-  ASSERT_FALSE(Int32HashSet_contains(&hash_set, 10, sizeof(int32_t)));
-  ASSERT_FALSE(Int32HashSet_contains(&hash_set, 20, sizeof(int32_t)));
+
+  EXPECT_FALSE(Int32HashSet_contains(&hash_set, 10, sizeof(int32_t)));
+  EXPECT_EQ(Int32HashSet_find(&hash_set, 10, sizeof(int32_t), -1), -1);
+  EXPECT_THAT(Int32HashSet_find_ref(&hash_set, 10, sizeof(int32_t)), IsNull());
+
+  EXPECT_FALSE(Int32HashSet_contains(&hash_set, 20, sizeof(int32_t)));
+  EXPECT_EQ(Int32HashSet_find(&hash_set, 20, sizeof(int32_t), -1), -1);
+  EXPECT_THAT(Int32HashSet_find_ref(&hash_set, 20, sizeof(int32_t)), IsNull());
 
   Int32HashSet_finalize(&hash_set);
 }
@@ -128,24 +142,40 @@ TEST(Int32HashSetTest, Reinsert) {
   Int32HashSet_init(&hash_set, hash_int32, compare_int32s);
 
   // Insert
-  ASSERT_TRUE(Int32HashSet_insert(&hash_set, 10, sizeof(int32_t)));
-  ASSERT_TRUE(Int32HashSet_contains(&hash_set, 10, sizeof(int32_t)));
-  ASSERT_FALSE(Int32HashSet_contains(&hash_set, 20, sizeof(int32_t)));
+  EXPECT_TRUE(Int32HashSet_insert(&hash_set, 10, sizeof(int32_t)));
+  EXPECT_TRUE(Int32HashSet_contains(&hash_set, 10, sizeof(int32_t)));
+  EXPECT_EQ(Int32HashSet_find(&hash_set, 10, sizeof(int32_t), -1), 10);
+  EXPECT_THAT(Int32HashSet_find_ref(&hash_set, 10, sizeof(int32_t)), NotNull());
+  EXPECT_EQ(*Int32HashSet_find_ref(&hash_set, 10, sizeof(int32_t)), 10);
+  EXPECT_FALSE(Int32HashSet_contains(&hash_set, 20, sizeof(int32_t)));
+  EXPECT_EQ(Int32HashSet_find(&hash_set, 20, sizeof(int32_t), -1), -1);
+  EXPECT_THAT(Int32HashSet_find_ref(&hash_set, 20, sizeof(int32_t)), IsNull());
 
   // Remove
-  ASSERT_TRUE(Int32HashSet_remove(&hash_set, 10, sizeof(int32_t)));
-  ASSERT_FALSE(Int32HashSet_remove(&hash_set, 20, sizeof(int32_t)));
+  EXPECT_TRUE(Int32HashSet_remove(&hash_set, 10, sizeof(int32_t)));
+  EXPECT_FALSE(Int32HashSet_remove(&hash_set, 20, sizeof(int32_t)));
 
   // Verify removal
-  ASSERT_FALSE(Int32HashSet_contains(&hash_set, 10, sizeof(int32_t)));
-  ASSERT_FALSE(Int32HashSet_contains(&hash_set, 20, sizeof(int32_t)));
+  EXPECT_FALSE(Int32HashSet_contains(&hash_set, 10, sizeof(int32_t)));
+  EXPECT_EQ(Int32HashSet_find(&hash_set, 10, sizeof(int32_t), -1), -1);
+  EXPECT_THAT(Int32HashSet_find_ref(&hash_set, 10, sizeof(int32_t)), IsNull());
+
+  EXPECT_FALSE(Int32HashSet_contains(&hash_set, 20, sizeof(int32_t)));
+  EXPECT_EQ(Int32HashSet_find(&hash_set, 20, sizeof(int32_t), -1), -1);
+  EXPECT_THAT(Int32HashSet_find_ref(&hash_set, 20, sizeof(int32_t)), IsNull());
 
   // Reinsert
-  ASSERT_TRUE(Int32HashSet_insert(&hash_set, 10, sizeof(int32_t)));
+  EXPECT_TRUE(Int32HashSet_insert(&hash_set, 10, sizeof(int32_t)));
 
   // Verify reinsertion
-  ASSERT_TRUE(Int32HashSet_contains(&hash_set, 10, sizeof(int32_t)));
-  ASSERT_FALSE(Int32HashSet_contains(&hash_set, 20, sizeof(int32_t)));
+  EXPECT_TRUE(Int32HashSet_contains(&hash_set, 10, sizeof(int32_t)));
+  EXPECT_EQ(Int32HashSet_find(&hash_set, 10, sizeof(int32_t), -1), 10);
+  EXPECT_THAT(Int32HashSet_find_ref(&hash_set, 10, sizeof(int32_t)), NotNull());
+  EXPECT_EQ(*Int32HashSet_find_ref(&hash_set, 10, sizeof(int32_t)), 10);
+
+  EXPECT_FALSE(Int32HashSet_contains(&hash_set, 20, sizeof(int32_t)));
+  EXPECT_EQ(Int32HashSet_find(&hash_set, 20, sizeof(int32_t), -1), -1);
+  EXPECT_THAT(Int32HashSet_find_ref(&hash_set, 20, sizeof(int32_t)), IsNull());
 
   Int32HashSet_finalize(&hash_set);
 }
@@ -154,51 +184,83 @@ TEST(Int32HashSetTest, Size) {
   Int32HashSet hash_set;
   Int32HashSet_init(&hash_set, hash_int32, compare_int32s);
 
-  ASSERT_EQ(Int32HashSet_size(&hash_set), 0);
+  EXPECT_EQ(Int32HashSet_size(&hash_set), 0);
 
-  ASSERT_TRUE(Int32HashSet_insert(&hash_set, 10, sizeof(int32_t)));
-  ASSERT_EQ(Int32HashSet_size(&hash_set), 1);
+  EXPECT_TRUE(Int32HashSet_insert(&hash_set, 10, sizeof(int32_t)));
+  EXPECT_EQ(Int32HashSet_size(&hash_set), 1);
 
-  ASSERT_TRUE(Int32HashSet_insert(&hash_set, 20, sizeof(int32_t)));
-  ASSERT_EQ(Int32HashSet_size(&hash_set), 2);
+  EXPECT_TRUE(Int32HashSet_insert(&hash_set, 20, sizeof(int32_t)));
+  EXPECT_EQ(Int32HashSet_size(&hash_set), 2);
 
-  ASSERT_TRUE(Int32HashSet_insert(&hash_set, 30, sizeof(int32_t)));
-  ASSERT_EQ(Int32HashSet_size(&hash_set), 3);
+  EXPECT_TRUE(Int32HashSet_insert(&hash_set, 30, sizeof(int32_t)));
+  EXPECT_EQ(Int32HashSet_size(&hash_set), 3);
 
-  ASSERT_TRUE(Int32HashSet_insert(&hash_set, 40, sizeof(int32_t)));
-  ASSERT_EQ(Int32HashSet_size(&hash_set), 4);
+  EXPECT_TRUE(Int32HashSet_insert(&hash_set, 40, sizeof(int32_t)));
+  EXPECT_EQ(Int32HashSet_size(&hash_set), 4);
 
-  ASSERT_TRUE(Int32HashSet_insert(&hash_set, 50, sizeof(int32_t)));
-  ASSERT_EQ(Int32HashSet_size(&hash_set), 5);
+  EXPECT_TRUE(Int32HashSet_insert(&hash_set, 50, sizeof(int32_t)));
+  EXPECT_EQ(Int32HashSet_size(&hash_set), 5);
 
-  ASSERT_TRUE(Int32HashSet_insert(&hash_set, 60, sizeof(int32_t)));
-  ASSERT_EQ(Int32HashSet_size(&hash_set), 6);
+  EXPECT_TRUE(Int32HashSet_insert(&hash_set, 60, sizeof(int32_t)));
+  EXPECT_EQ(Int32HashSet_size(&hash_set), 6);
 
-  ASSERT_TRUE(Int32HashSet_insert(&hash_set, 70, sizeof(int32_t)));
-  ASSERT_EQ(Int32HashSet_size(&hash_set), 7);
+  EXPECT_TRUE(Int32HashSet_insert(&hash_set, 70, sizeof(int32_t)));
+  EXPECT_EQ(Int32HashSet_size(&hash_set), 7);
 
-  ASSERT_TRUE(Int32HashSet_remove(&hash_set, 10, sizeof(int32_t)));
-  ASSERT_EQ(Int32HashSet_size(&hash_set), 6);
+  EXPECT_TRUE(Int32HashSet_remove(&hash_set, 10, sizeof(int32_t)));
+  EXPECT_EQ(Int32HashSet_size(&hash_set), 6);
 
-  ASSERT_TRUE(Int32HashSet_remove(&hash_set, 20, sizeof(int32_t)));
-  ASSERT_EQ(Int32HashSet_size(&hash_set), 5);
+  EXPECT_TRUE(Int32HashSet_remove(&hash_set, 20, sizeof(int32_t)));
+  EXPECT_EQ(Int32HashSet_size(&hash_set), 5);
 
-  ASSERT_TRUE(Int32HashSet_remove(&hash_set, 30, sizeof(int32_t)));
-  ASSERT_EQ(Int32HashSet_size(&hash_set), 4);
+  EXPECT_TRUE(Int32HashSet_remove(&hash_set, 30, sizeof(int32_t)));
+  EXPECT_EQ(Int32HashSet_size(&hash_set), 4);
 
-  ASSERT_TRUE(Int32HashSet_remove(&hash_set, 40, sizeof(int32_t)));
-  ASSERT_EQ(Int32HashSet_size(&hash_set), 3);
+  EXPECT_TRUE(Int32HashSet_remove(&hash_set, 40, sizeof(int32_t)));
+  EXPECT_EQ(Int32HashSet_size(&hash_set), 3);
 
-  ASSERT_TRUE(Int32HashSet_remove(&hash_set, 50, sizeof(int32_t)));
-  ASSERT_EQ(Int32HashSet_size(&hash_set), 2);
+  EXPECT_TRUE(Int32HashSet_remove(&hash_set, 50, sizeof(int32_t)));
+  EXPECT_EQ(Int32HashSet_size(&hash_set), 2);
 
-  ASSERT_TRUE(Int32HashSet_remove(&hash_set, 60, sizeof(int32_t)));
-  ASSERT_EQ(Int32HashSet_size(&hash_set), 1);
+  EXPECT_TRUE(Int32HashSet_remove(&hash_set, 60, sizeof(int32_t)));
+  EXPECT_EQ(Int32HashSet_size(&hash_set), 1);
 
-  ASSERT_TRUE(Int32HashSet_remove(&hash_set, 70, sizeof(int32_t)));
-  ASSERT_EQ(Int32HashSet_size(&hash_set), 0);
+  EXPECT_TRUE(Int32HashSet_remove(&hash_set, 70, sizeof(int32_t)));
+  EXPECT_EQ(Int32HashSet_size(&hash_set), 0);
 
   Int32HashSet_finalize(&hash_set);
+}
+
+TEST(Int32HashSetTest, Iterator) {
+  Int32HashSet hash_set;
+  Int32HashSet_init(&hash_set, hash_int32, compare_int32s);
+
+  Int32HashSet_insert(&hash_set, 10, sizeof(int32_t));
+  Int32HashSet_insert(&hash_set, 20, sizeof(int32_t));
+  Int32HashSet_insert(&hash_set, 30, sizeof(int32_t));
+
+  Int32HashSetIterator it;
+  Int32HashSet_iterator(&it, &hash_set);
+
+  EXPECT_TRUE(Int32HashSet_has_next(&it));
+  EXPECT_EQ(Int32HashSet_value_size(&it), sizeof(int32_t));
+  EXPECT_EQ(*Int32HashSet_value(&it), 10);
+  EXPECT_EQ(*Int32HashSet_mutable_value(&it), 10);
+  Int32HashSet_next(&it);
+
+  EXPECT_TRUE(Int32HashSet_has_next(&it));
+  EXPECT_EQ(Int32HashSet_value_size(&it), sizeof(int32_t));
+  EXPECT_EQ(*Int32HashSet_value(&it), 20);
+  EXPECT_EQ(*Int32HashSet_mutable_value(&it), 20);
+  Int32HashSet_next(&it);
+
+  EXPECT_TRUE(Int32HashSet_has_next(&it));
+  EXPECT_EQ(Int32HashSet_value_size(&it), sizeof(int32_t));
+  EXPECT_EQ(*Int32HashSet_value(&it), 30);
+  EXPECT_EQ(*Int32HashSet_mutable_value(&it), 30);
+  Int32HashSet_next(&it);
+
+  EXPECT_FALSE(Int32HashSet_has_next(&it));
 }
 
 TEST(StringHashSetTest, Init) {
@@ -216,11 +278,11 @@ TEST(StringHashSetTest, Insert) {
   StringHashSet hash_set;
   StringHashSet_init(&hash_set, hash_string, compare_strings);
   // Insert
-  ASSERT_TRUE(StringHashSet_insert(&hash_set, "cat", sizeof("cat")));
+  EXPECT_TRUE(StringHashSet_insert(&hash_set, "cat", strlen("cat")));
 
   // Verify
-  ASSERT_TRUE(StringHashSet_contains(&hash_set, "cat", sizeof("cat")));
-  ASSERT_FALSE(StringHashSet_contains(&hash_set, "hat", sizeof("hat")));
+  EXPECT_TRUE(StringHashSet_contains(&hash_set, "cat", strlen("cat")));
+  EXPECT_FALSE(StringHashSet_contains(&hash_set, "hat", strlen("hat")));
 
   StringHashSet_finalize(&hash_set);
 }
@@ -230,27 +292,27 @@ TEST(StringHashSetTest, InsertN) {
   StringHashSet_init(&hash_set, hash_string, compare_strings);
 
   // Insert
-  ASSERT_TRUE(StringHashSet_insert(&hash_set, "cat", sizeof("cat")));
-  ASSERT_TRUE(StringHashSet_insert(&hash_set, "in", sizeof("in")));
-  ASSERT_TRUE(StringHashSet_insert(&hash_set, "the", sizeof("the")));
-  ASSERT_TRUE(StringHashSet_insert(&hash_set, "hat", sizeof("hat")));
-  ASSERT_TRUE(StringHashSet_insert(&hash_set, "red", sizeof("red")));
-  ASSERT_TRUE(StringHashSet_insert(&hash_set, "blue", sizeof("blue")));
-  ASSERT_TRUE(StringHashSet_insert(&hash_set, "fish", sizeof("fish")));
+  EXPECT_TRUE(StringHashSet_insert(&hash_set, "cat", strlen("cat")));
+  EXPECT_TRUE(StringHashSet_insert(&hash_set, "in", strlen("in")));
+  EXPECT_TRUE(StringHashSet_insert(&hash_set, "the", strlen("the")));
+  EXPECT_TRUE(StringHashSet_insert(&hash_set, "hat", strlen("hat")));
+  EXPECT_TRUE(StringHashSet_insert(&hash_set, "red", strlen("red")));
+  EXPECT_TRUE(StringHashSet_insert(&hash_set, "blue", strlen("blue")));
+  EXPECT_TRUE(StringHashSet_insert(&hash_set, "fish", strlen("fish")));
 
   // Verify
-  ASSERT_TRUE(StringHashSet_contains(&hash_set, "cat", sizeof("cat")));
-  ASSERT_TRUE(StringHashSet_contains(&hash_set, "in", sizeof("in")));
-  ASSERT_TRUE(StringHashSet_contains(&hash_set, "the", sizeof("the")));
-  ASSERT_TRUE(StringHashSet_contains(&hash_set, "hat", sizeof("hat")));
-  ASSERT_TRUE(StringHashSet_contains(&hash_set, "red", sizeof("red")));
-  ASSERT_TRUE(StringHashSet_contains(&hash_set, "blue", sizeof("blue")));
-  ASSERT_TRUE(StringHashSet_contains(&hash_set, "fish", sizeof("fish")));
+  EXPECT_TRUE(StringHashSet_contains(&hash_set, "cat", strlen("cat")));
+  EXPECT_TRUE(StringHashSet_contains(&hash_set, "in", strlen("in")));
+  EXPECT_TRUE(StringHashSet_contains(&hash_set, "the", strlen("the")));
+  EXPECT_TRUE(StringHashSet_contains(&hash_set, "hat", strlen("hat")));
+  EXPECT_TRUE(StringHashSet_contains(&hash_set, "red", strlen("red")));
+  EXPECT_TRUE(StringHashSet_contains(&hash_set, "blue", strlen("blue")));
+  EXPECT_TRUE(StringHashSet_contains(&hash_set, "fish", strlen("fish")));
 
-  ASSERT_FALSE(StringHashSet_contains(&hash_set, "lorax", sizeof("lorax")));
-  ASSERT_FALSE(StringHashSet_contains(&hash_set, "borax", sizeof("borax")));
-  ASSERT_FALSE(
-      StringHashSet_contains(&hash_set, "floor wax", sizeof("floor wax")));
+  EXPECT_FALSE(StringHashSet_contains(&hash_set, "lorax", strlen("lorax")));
+  EXPECT_FALSE(StringHashSet_contains(&hash_set, "borax", strlen("borax")));
+  EXPECT_FALSE(
+      StringHashSet_contains(&hash_set, "floor wax", strlen("floor wax")));
 
   StringHashSet_finalize(&hash_set);
 }
@@ -260,17 +322,17 @@ TEST(StringHashSetTest, Remove) {
   StringHashSet_init(&hash_set, hash_string, compare_strings);
 
   // Insert
-  ASSERT_TRUE(StringHashSet_insert(&hash_set, "cat", sizeof("cat")));
-  ASSERT_TRUE(StringHashSet_contains(&hash_set, "cat", sizeof("cat")));
-  ASSERT_FALSE(StringHashSet_contains(&hash_set, "hat", sizeof("hat")));
+  EXPECT_TRUE(StringHashSet_insert(&hash_set, "cat", strlen("cat")));
+  EXPECT_TRUE(StringHashSet_contains(&hash_set, "cat", strlen("cat")));
+  EXPECT_FALSE(StringHashSet_contains(&hash_set, "hat", strlen("hat")));
 
   // Remove
-  ASSERT_TRUE(StringHashSet_remove(&hash_set, "cat", sizeof("cat")));
-  ASSERT_FALSE(StringHashSet_remove(&hash_set, "hat", sizeof("hat")));
+  EXPECT_TRUE(StringHashSet_remove(&hash_set, "cat", strlen("cat")));
+  EXPECT_FALSE(StringHashSet_remove(&hash_set, "hat", strlen("hat")));
 
   // Verify
-  ASSERT_FALSE(StringHashSet_contains(&hash_set, "cat", sizeof("cat")));
-  ASSERT_FALSE(StringHashSet_contains(&hash_set, "hat", sizeof("hat")));
+  EXPECT_FALSE(StringHashSet_contains(&hash_set, "cat", strlen("cat")));
+  EXPECT_FALSE(StringHashSet_contains(&hash_set, "hat", strlen("hat")));
 
   StringHashSet_finalize(&hash_set);
 }
@@ -280,24 +342,30 @@ TEST(StringHashSetTest, Reinsert) {
   StringHashSet_init(&hash_set, hash_string, compare_strings);
 
   // Insert
-  ASSERT_TRUE(StringHashSet_insert(&hash_set, "cat", sizeof("cat")));
-  ASSERT_TRUE(StringHashSet_contains(&hash_set, "cat", sizeof("cat")));
-  ASSERT_FALSE(StringHashSet_contains(&hash_set, "hat", sizeof("hat")));
+  EXPECT_TRUE(StringHashSet_insert(&hash_set, "cat", strlen("cat")));
+  EXPECT_STREQ(StringHashSet_find(&hash_set, "cat", strlen("cat"), (char *)""),
+               "cat");
+  EXPECT_STREQ(*StringHashSet_find_ref(&hash_set, "cat", strlen("cat")), "cat");
+  EXPECT_TRUE(StringHashSet_contains(&hash_set, "cat", strlen("cat")));
+  EXPECT_FALSE(StringHashSet_contains(&hash_set, "hat", strlen("hat")));
 
   // Remove
-  ASSERT_TRUE(StringHashSet_remove(&hash_set, "cat", sizeof("cat")));
-  ASSERT_FALSE(StringHashSet_remove(&hash_set, "hat", sizeof("hat")));
+  EXPECT_TRUE(StringHashSet_remove(&hash_set, "cat", strlen("cat")));
+  EXPECT_FALSE(StringHashSet_remove(&hash_set, "hat", strlen("hat")));
 
   // Verify removal
-  ASSERT_FALSE(StringHashSet_contains(&hash_set, "cat", sizeof("cat")));
-  ASSERT_FALSE(StringHashSet_contains(&hash_set, "hat", sizeof("hat")));
+  EXPECT_FALSE(StringHashSet_contains(&hash_set, "cat", strlen("cat")));
+  EXPECT_FALSE(StringHashSet_contains(&hash_set, "hat", strlen("hat")));
 
   // Reinsert
-  ASSERT_TRUE(StringHashSet_insert(&hash_set, "cat", sizeof("cat")));
+  EXPECT_TRUE(StringHashSet_insert(&hash_set, "cat", strlen("cat")));
 
   // Verify reinsertion
-  ASSERT_TRUE(StringHashSet_contains(&hash_set, "cat", sizeof("cat")));
-  ASSERT_FALSE(StringHashSet_contains(&hash_set, "hat", sizeof("hat")));
+  EXPECT_TRUE(StringHashSet_contains(&hash_set, "cat", strlen("cat")));
+  EXPECT_STREQ(StringHashSet_find(&hash_set, "cat", strlen("cat"), (char *)""),
+               "cat");
+  EXPECT_STREQ(*StringHashSet_find_ref(&hash_set, "cat", strlen("cat")), "cat");
+  EXPECT_FALSE(StringHashSet_contains(&hash_set, "hat", strlen("hat")));
 
   StringHashSet_finalize(&hash_set);
 }
@@ -306,49 +374,49 @@ TEST(StringHashSetTest, Size) {
   StringHashSet hash_set;
   StringHashSet_init(&hash_set, hash_string, compare_strings);
 
-  ASSERT_EQ(StringHashSet_size(&hash_set), 0);
+  EXPECT_EQ(StringHashSet_size(&hash_set), 0);
 
-  ASSERT_TRUE(StringHashSet_insert(&hash_set, "cat", sizeof("cat")));
-  ASSERT_EQ(StringHashSet_size(&hash_set), 1);
+  EXPECT_TRUE(StringHashSet_insert(&hash_set, "cat", strlen("cat")));
+  EXPECT_EQ(StringHashSet_size(&hash_set), 1);
 
-  ASSERT_TRUE(StringHashSet_insert(&hash_set, "in", sizeof("in")));
-  ASSERT_EQ(StringHashSet_size(&hash_set), 2);
+  EXPECT_TRUE(StringHashSet_insert(&hash_set, "in", strlen("in")));
+  EXPECT_EQ(StringHashSet_size(&hash_set), 2);
 
-  ASSERT_TRUE(StringHashSet_insert(&hash_set, "the", sizeof("the")));
-  ASSERT_EQ(StringHashSet_size(&hash_set), 3);
+  EXPECT_TRUE(StringHashSet_insert(&hash_set, "the", strlen("the")));
+  EXPECT_EQ(StringHashSet_size(&hash_set), 3);
 
-  ASSERT_TRUE(StringHashSet_insert(&hash_set, "hat", sizeof("hat")));
-  ASSERT_EQ(StringHashSet_size(&hash_set), 4);
+  EXPECT_TRUE(StringHashSet_insert(&hash_set, "hat", strlen("hat")));
+  EXPECT_EQ(StringHashSet_size(&hash_set), 4);
 
-  ASSERT_TRUE(StringHashSet_insert(&hash_set, "red", sizeof("red")));
-  ASSERT_EQ(StringHashSet_size(&hash_set), 5);
+  EXPECT_TRUE(StringHashSet_insert(&hash_set, "red", strlen("red")));
+  EXPECT_EQ(StringHashSet_size(&hash_set), 5);
 
-  ASSERT_TRUE(StringHashSet_insert(&hash_set, "blue", sizeof("blue")));
-  ASSERT_EQ(StringHashSet_size(&hash_set), 6);
+  EXPECT_TRUE(StringHashSet_insert(&hash_set, "blue", strlen("blue")));
+  EXPECT_EQ(StringHashSet_size(&hash_set), 6);
 
-  ASSERT_TRUE(StringHashSet_insert(&hash_set, "fish", sizeof("fish")));
-  ASSERT_EQ(StringHashSet_size(&hash_set), 7);
+  EXPECT_TRUE(StringHashSet_insert(&hash_set, "fish", strlen("fish")));
+  EXPECT_EQ(StringHashSet_size(&hash_set), 7);
 
-  ASSERT_TRUE(StringHashSet_remove(&hash_set, "cat", sizeof("cat")));
-  ASSERT_EQ(StringHashSet_size(&hash_set), 6);
+  EXPECT_TRUE(StringHashSet_remove(&hash_set, "cat", strlen("cat")));
+  EXPECT_EQ(StringHashSet_size(&hash_set), 6);
 
-  ASSERT_TRUE(StringHashSet_remove(&hash_set, "in", sizeof("in")));
-  ASSERT_EQ(StringHashSet_size(&hash_set), 5);
+  EXPECT_TRUE(StringHashSet_remove(&hash_set, "in", strlen("in")));
+  EXPECT_EQ(StringHashSet_size(&hash_set), 5);
 
-  ASSERT_TRUE(StringHashSet_remove(&hash_set, "the", sizeof("the")));
-  ASSERT_EQ(StringHashSet_size(&hash_set), 4);
+  EXPECT_TRUE(StringHashSet_remove(&hash_set, "the", strlen("the")));
+  EXPECT_EQ(StringHashSet_size(&hash_set), 4);
 
-  ASSERT_TRUE(StringHashSet_remove(&hash_set, "hat", sizeof("hat")));
-  ASSERT_EQ(StringHashSet_size(&hash_set), 3);
+  EXPECT_TRUE(StringHashSet_remove(&hash_set, "hat", strlen("hat")));
+  EXPECT_EQ(StringHashSet_size(&hash_set), 3);
 
-  ASSERT_TRUE(StringHashSet_remove(&hash_set, "red", sizeof("red")));
-  ASSERT_EQ(StringHashSet_size(&hash_set), 2);
+  EXPECT_TRUE(StringHashSet_remove(&hash_set, "red", strlen("red")));
+  EXPECT_EQ(StringHashSet_size(&hash_set), 2);
 
-  ASSERT_TRUE(StringHashSet_remove(&hash_set, "blue", sizeof("blue")));
-  ASSERT_EQ(StringHashSet_size(&hash_set), 1);
+  EXPECT_TRUE(StringHashSet_remove(&hash_set, "blue", strlen("blue")));
+  EXPECT_EQ(StringHashSet_size(&hash_set), 1);
 
-  ASSERT_TRUE(StringHashSet_remove(&hash_set, "fish", sizeof("fish")));
-  ASSERT_EQ(StringHashSet_size(&hash_set), 0);
+  EXPECT_TRUE(StringHashSet_remove(&hash_set, "fish", strlen("fish")));
+  EXPECT_EQ(StringHashSet_size(&hash_set), 0);
 
   StringHashSet_finalize(&hash_set);
 }
@@ -367,16 +435,19 @@ TEST(StringHashSetTest, Iterator) {
   EXPECT_TRUE(StringHashSet_has_next(&it));
   EXPECT_EQ(StringHashSet_value_size(&it), strlen("a"));
   EXPECT_STREQ(*StringHashSet_value(&it), "a");
+  EXPECT_STREQ(*StringHashSet_mutable_value(&it), "a");
   StringHashSet_next(&it);
 
   EXPECT_TRUE(StringHashSet_has_next(&it));
   EXPECT_EQ(StringHashSet_value_size(&it), strlen("b"));
   EXPECT_EQ(*StringHashSet_value(&it), "b");
+  EXPECT_STREQ(*StringHashSet_mutable_value(&it), "b");
   StringHashSet_next(&it);
 
   EXPECT_TRUE(StringHashSet_has_next(&it));
   EXPECT_EQ(StringHashSet_value_size(&it), strlen("c"));
   EXPECT_EQ(*StringHashSet_value(&it), "c");
+  EXPECT_STREQ(*StringHashSet_mutable_value(&it), "c");
   StringHashSet_next(&it);
 
   EXPECT_FALSE(StringHashSet_has_next(&it));

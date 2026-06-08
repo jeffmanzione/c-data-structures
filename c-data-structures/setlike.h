@@ -89,7 +89,7 @@ extern "C" {
   bool name##_has_next(const name##Iterator *const);                          \
   void name##_next(name##Iterator *);                                         \
   const value_type *name##_value(const name##Iterator *const);                \
-  value_type *name##_mutable_value(const name##Iterator *const)
+  value_type *name##_mutable_value(name##Iterator *)
 
 // Expands to the implementation for a hash set with the given name and value
 // type.
@@ -382,7 +382,9 @@ extern "C" {
     it->cur = hash_set->first;                                                 \
   }                                                                            \
                                                                                \
-  bool name##_has_next(name##Iterator *const it) { return it->cur != NULL; }   \
+  bool name##_has_next(const name##Iterator *const it) {                       \
+    return it->cur != NULL;                                                    \
+  }                                                                            \
                                                                                \
   void name##_next(name##Iterator *it) { it->cur = it->cur->next; }            \
                                                                                \
@@ -390,7 +392,7 @@ extern "C" {
     return (const value_type *)&it->cur->value;                                \
   }                                                                            \
                                                                                \
-  value_type *name##_mutable_value(const name##Iterator *const it) {           \
+  value_type *name##_mutable_value(name##Iterator *it) {                       \
     return &it->cur->value;                                                    \
   }                                                                            \
                                                                                \
