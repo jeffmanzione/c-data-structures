@@ -12,13 +12,6 @@ IMPL_STABLE_MAPLIKE(StringToIntMap, char *, int);
 #define FNV_32_PRIME (0x01000193)
 #define FNV_1A_32_OFFSET (0x811C9DC5)
 
-uint32_t hash_int32(const int32_t num, uint32_t size) { return (uint32_t)num; }
-
-int32_t compare_int32s(const int32_t num1, uint32_t size1, const int32_t num2,
-                       uint32_t size2) {
-  return num1 - num2;
-}
-
 uint32_t hash_string(const char *ptr, uint32_t size) {
   unsigned char *s = (unsigned char *)ptr;
   uint32_t hval = FNV_1A_32_OFFSET;
@@ -210,7 +203,7 @@ TEST_F(StringToIntMapTest, Iterator) {
   StringToIntMapIterator it;
   StringToIntMap_iterator(&it, &map);
   EXPECT_TRUE(StringToIntMap_has_entry(&it));
-  StringToIntMapKVMapPair *kv = StringToIntMap_entry(&it);
+  const StringToIntMapPair *kv = StringToIntMap_entry(&it);
   EXPECT_EQ(kv->key, "a");
   EXPECT_EQ(kv->key_size, strlen("a"));
   EXPECT_EQ(*kv->value, 10);

@@ -4,7 +4,9 @@
             "name": "Linux",
             "includePath": [
                 "${default}",
-                "${workspaceFolder}"
+                "${workspaceFolder}",
+                "${workspaceFolder}/bazel-c-data-structures/external/googletest+/googlemock/include",
+                "${workspaceFolder}/bazel-c-data-structures/external/googletest+/googletest/include"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",

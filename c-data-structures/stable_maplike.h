@@ -9,43 +9,42 @@
 #include "c-data-structures/maplike.h"
 #include "c-data-structures/stable_arraylike.h"
 
-#define DEFINE_STABLE_MAPLIKE(name, key_type, value_type)                   \
-                                                                            \
-  DEFINE_STABLE_ARRAYLIKE(name##ValueArray, value_type);                    \
-                                                                            \
-  DEFINE_MAPLIKE(name##KVMap, key_type, value_type *);                      \
-                                                                            \
-  typedef struct {                                                          \
-    name##ValueArray arr;                                                   \
-    name##KVMap map;                                                        \
-  } name;                                                                   \
-                                                                            \
-  typedef struct {                                                          \
-    name##KVMapIterator it;                                                 \
-  } name##Iterator;                                                         \
-                                                                            \
-  bool name##_init(name *kl, name##KVMapHashFn, name##KVMapCompareFn);      \
-  void name##_finalize(name *kl);                                           \
-                                                                            \
-  bool name##_insert(name *kl, const key_type key,                          \
-                     uint32_t key_size value_type **entry);                 \
-  value_type name##_find(name *kl, const key_type key,                      \
-                         uint32_t key_size value_type default_value);       \
-  value_type *name##_find_ref(name *kl, const key_type key,                 \
-                              uint32_t key_size);                           \
-  bool name##_contains(const name *const kl, const key_type key,            \
-                       uint32_t key_size);                                  \
-                                                                            \
-  uint32_t name##_size(const name *);                                       \
-                                                                            \
-  void name##_iterator(name##Iterator *, name *const);                      \
-  bool name##_has_entry(const name##Iterator *const);                       \
-  void name##_next_entry(name##Iterator *);                                 \
-  name##KVMapPair *name##_entry(const name##Iterator *const);               \
-  const name##KVMapPair *name##_mutable_entry(const name##Iterator *const); \
-  const key_type name##_key(const name##Iterator *const);                   \
-  const value_type *name##_value(const name##Iterator *const);              \
-  value_type *name##_mutable_value(const name##Iterator *const)
+#define DEFINE_STABLE_MAPLIKE(name, key_type, value_type)                 \
+                                                                          \
+  DEFINE_STABLE_ARRAYLIKE(name##ValueArray, value_type);                  \
+                                                                          \
+  DEFINE_MAPLIKE(name##KVMap, key_type, value_type *);                    \
+                                                                          \
+  typedef struct {                                                        \
+    name##ValueArray arr;                                                 \
+    name##KVMap map;                                                      \
+  } name;                                                                 \
+                                                                          \
+  typedef name##KVMapIterator name##Iterator;                             \
+  typedef name##KVMapPair name##Pair;                                     \
+                                                                          \
+  bool name##_init(name *kl, name##KVMapHashFn, name##KVMapCompareFn);    \
+  void name##_finalize(name *kl);                                         \
+                                                                          \
+  bool name##_insert(name *kl, const key_type key, uint32_t key_size,     \
+                     value_type **entry);                                 \
+  value_type name##_find(name *kl, const key_type key, uint32_t key_size, \
+                         value_type default_value);                       \
+  value_type *name##_find_ref(name *kl, const key_type key,               \
+                              uint32_t key_size);                         \
+  bool name##_contains(const name *const kl, const key_type key,          \
+                       uint32_t key_size);                                \
+                                                                          \
+  uint32_t name##_size(const name *);                                     \
+                                                                          \
+  void name##_iterator(name##Iterator *, name *const);                    \
+  bool name##_has_entry(const name##Iterator *const);                     \
+  void name##_next_entry(name##Iterator *);                               \
+  const name##Pair *name##_entry(const name##Iterator *const);            \
+  name##Pair *name##_mutable_entry(name##Iterator *);                     \
+  const key_type name##_key(const name##Iterator *const);                 \
+  const value_type *name##_value(const name##Iterator *const);            \
+  value_type *name##_mutable_value(name##Iterator *)
 
 #define IMPL_STABLE_MAPLIKE(name, key_type, value_type)                       \
                                                                               \
@@ -99,37 +98,35 @@
   }                                                                           \
                                                                               \
   uint32_t name##_size(const name *kl) { return name##KVMap_size(&kl->map); } \
+                                                                              \
   void name##_iterator(name##Iterator *it, name *const kl) {                  \
-    name##KVMap_iterator(&it->it, &kl->map);                                  \
+    name##KVMap_iterator(it, &kl->map);                                       \
   }                                                                           \
                                                                               \
   bool name##_has_entry(const name##Iterator *const it) {                     \
-    return name##KVMap_has_entry(&it->it);                                    \
+    return name##KVMap_has_entry(it);                                         \
   }                                                                           \
                                                                               \
-  void name##_next_entry(name##Iterator *it) {                                \
-    name##KVMap_next_entry(&it->it);                                          \
+  void name##_next_entry(name##Iterator *it) { name##KVMap_next_entry(it); }  \
+                                                                              \
+  const name##Pair *name##_entry(const name##Iterator *const it) {            \
+    return name##KVMap_entry(it);                                             \
   }                                                                           \
                                                                               \
-  name##KVMapPair *name##_entry(const name##Iterator *const it) {             \
-    return name##KVMap_entry(&it->it);                                        \
-  }                                                                           \
-                                                                              \
-  const name##KVMapPair *name##_mutable_entry(                                \
-      const name##Iterator *const it) {                                       \
-    return name##KVMap_mutable_entry(&it->it);                                \
+  name##Pair *name##_mutable_entry(name##Iterator *it) {                      \
+    return name##KVMap_mutable_entry(it);                                     \
   }                                                                           \
                                                                               \
   const key_type name##_key(const name##Iterator *const it) {                 \
-    return name##KVMap_key(&it->it);                                          \
+    return name##KVMap_key(it);                                               \
   }                                                                           \
                                                                               \
   const value_type *name##_value(const name##Iterator *const it) {            \
-    return *name##KVMap_value(&it->it);                                       \
+    return *name##KVMap_value(it);                                            \
   }                                                                           \
                                                                               \
-  value_type *name##_mutable_value(const name##Iterator *const it) {          \
-    return *name##KVMap_mutable_value(&it->it);                               \
+  value_type *name##_mutable_value(name##Iterator *it) {                      \
+    return *name##KVMap_mutable_value(it);                                    \
   }
 
 #endif /* COM_GITHUB_JEFFMANZIONE_C_DATA_STRUCTURES_STABLE_MAPLIKE_H_ */
