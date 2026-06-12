@@ -7,6 +7,7 @@ extern "C" {
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 // A decent small prime number to use as the starting size for the hashtable
 #define SETLIKE_DEFAULT_capacity 31
