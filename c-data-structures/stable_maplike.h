@@ -27,9 +27,10 @@
   bool name##_init(name *kl, name##KVMapHashFn, name##KVMapCompareFn);      \
   void name##_finalize(name *kl);                                           \
                                                                             \
-  bool name##_insert(name *kl, const key_type key, value_type **entry);     \
+  bool name##_insert(name *kl, const key_type key,                          \
+                     uint32_t key_size value_type **entry);                 \
   value_type name##_find(name *kl, const key_type key,                      \
-                         value_type default_value);                         \
+                         uint32_t key_size value_type default_value);       \
   value_type *name##_find_ref(name *kl, const key_type key,                 \
                               uint32_t key_size);                           \
   bool name##_contains(const name *const kl, const key_type key,            \
