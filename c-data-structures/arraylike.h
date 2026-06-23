@@ -146,9 +146,9 @@ extern "C" {
   /* Random access lookup */                                                  \
   bool name##_get(const name *const, int32_t, type *ptr);                     \
   type name##_get_unchecked(const name *const, int32_t);                      \
-  bool name##_get_ref(name *const, int32_t, const type **ptr);                \
+  bool name##_get_ref(const name *const, int32_t, const type **ptr);          \
   bool name##_mutable_ref(name *const, int32_t, type **ptr);                  \
-  const type *name##_get_ref_unchecked(name *const, int32_t);                 \
+  const type *name##_get_ref_unchecked(const name *const, int32_t);           \
   type *name##_mutable_ref_unchecked(name *const, int32_t);                   \
   bool name##_last(name *const, type *ptr);                                   \
   type name##_last_unchecked(name *const);                                    \
@@ -192,12 +192,13 @@ extern "C" {
 #define IMPL_ARRAYLIKE(name, type)                                             \
                                                                                \
   bool name##_init_capacity(name *array, size_t capacity) {                    \
+    array->size = 0;                                                           \
+    array->capacity = capacity;                                                \
     if (capacity == 0) {                                                       \
       return false;                                                            \
     }                                                                          \
-    array->table = (type *)calloc((array->capacity = capacity), sizeof(type)); \
+    array->table = (type *)calloc(capacity, sizeof(type));                     \
     assert(array->table != NULL);                                              \
-    array->size = 0;                                                           \
     return true;                                                               \
   }                                                                            \
                                                                                \
@@ -222,18 +223,25 @@ extern "C" {
   name *name##_create_copy(const type input[], size_t capacity) {              \
     name *array = (name *)malloc(sizeof(name));                                \
     assert(array != NULL);                                                     \
-    name##_init_capacity(array,                                                \
-                         ((capacity + ARRAYLIKE_DEFAULT_TABLE_SIZE - 1) /      \
-                          ARRAYLIKE_DEFAULT_TABLE_SIZE) *                      \
-                             ARRAYLIKE_DEFAULT_TABLE_SIZE);                    \
-    memmove(array->table, input, capacity * sizeof(type));                     \
+    array->table = NULL;                                                       \
+    if (capacity > 0) {                                                        \
+      name##_init_capacity(array,                                              \
+                           ((capacity + ARRAYLIKE_DEFAULT_TABLE_SIZE - 1) /    \
+                            ARRAYLIKE_DEFAULT_TABLE_SIZE) *                    \
+                               ARRAYLIKE_DEFAULT_TABLE_SIZE);                  \
+      memcpy(array->table, input, capacity * sizeof(type));                    \
+    } else {                                                                   \
+      array->capacity = 0;                                                     \
+    }                                                                          \
     array->size = capacity;                                                    \
     return array;                                                              \
   }                                                                            \
                                                                                \
   void name##_finalize(name *array) {                                          \
     assert(array != NULL);                                                     \
-    free(array->table);                                                        \
+    if (array->table != NULL) {                                                \
+      free(array->table);                                                      \
+    }                                                                          \
   }                                                                            \
                                                                                \
   void name##_delete(name *array) {                                            \
@@ -252,6 +260,12 @@ extern "C" {
     if (new_capacity <= array->capacity) {                                     \
       return;                                                                  \
     }                                                                          \
+    if (array->table == NULL) {                                                \
+      array->table = (type *)calloc(new_capacity, sizeof(type));               \
+      assert(array->table != NULL);                                            \
+      array->capacity = new_capacity;                                          \
+      return;                                                                  \
+    }                                                                          \
     array->table = (type *)realloc(array->table, sizeof(type) * new_capacity); \
     assert(array->table != NULL);                                              \
     array->capacity = new_capacity;                                            \
@@ -262,6 +276,9 @@ extern "C" {
   static inline void name##_shift_left(name *const array, int32_t start,       \
                                        int32_t amount) {                       \
     assert(amount > 0 && start >= amount);                                     \
+    if (array->size == 0) {                                                    \
+      return;                                                                  \
+    }                                                                          \
     memmove(array->table + start - amount, array->table + start,               \
             (array->size - start) * sizeof(type));                             \
   }                                                                            \
@@ -418,7 +435,8 @@ extern "C" {
     return array->table[index];                                                \
   }                                                                            \
                                                                                \
-  bool name##_get_ref(name *const array, int32_t index, const type **ptr) {    \
+  bool name##_get_ref(const name *const array, int32_t index,                  \
+                      const type **ptr) {                                      \
     if (index < 0 || (size_t)index >= array->size) {                           \
       return false;                                                            \
     }                                                                          \
@@ -435,8 +453,9 @@ extern "C" {
     return true;                                                               \
   }                                                                            \
                                                                                \
-  const type *name##_get_ref_unchecked(name *const array, int32_t index) {     \
-    return (const type *)name##_mutable_ref_unchecked(array, index);           \
+  const type *name##_get_ref_unchecked(const name *const array,                \
+                                       int32_t index) {                        \
+    return (const type *)name##_mutable_ref_unchecked((name *)array, index);   \
   }                                                                            \
                                                                                \
   type *name##_mutable_ref_unchecked(name *const array, int32_t index) {       \
@@ -505,7 +524,7 @@ extern "C" {
     *copy = *array;                                                            \
     copy->table = (type *)malloc(sizeof(type) * array->capacity);              \
     assert(copy->table != NULL);                                               \
-    memcpy(copy->table, array->table, sizeof(type) * array->size);             \
+    memcpy(copy->table, array->table, sizeof(type) * array->capacity);         \
     return copy;                                                               \
   }                                                                            \
                                                                                \

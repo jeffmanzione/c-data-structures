@@ -65,7 +65,7 @@ extern "C" {
   bool name##_is_empty(const name *const);                           \
                                                                      \
   /* Iteration */                                                    \
-  void name##_iterator(name##Iterator *, name *const);               \
+  void name##_iterator(name##Iterator *, const name *const);         \
   bool name##_has_next(const name##Iterator *const);                 \
   void name##_next(name##Iterator *);                                \
   const type *name##_value(const name##Iterator *const);             \
@@ -234,8 +234,8 @@ extern "C" {
   bool name##_is_empty(const name *const array) { return array->size == 0; } \
                                                                              \
   /* --- Iteration --- */                                                    \
-  void name##_iterator(name##Iterator *it, name *const array) {              \
-    it->array = array;                                                       \
+  void name##_iterator(name##Iterator *it, const name *const array) {        \
+    it->array = (name *)array;                                               \
     it->index = 0;                                                           \
   }                                                                          \
                                                                              \

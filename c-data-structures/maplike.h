@@ -89,7 +89,7 @@ extern "C" {
   } name;                                                                      \
                                                                                \
   typedef struct {                                                             \
-    const key_type key;                                                        \
+    key_type key;                                                              \
     uint32_t key_size;                                                         \
     value_type value;                                                          \
   } name##Pair;                                                                \
@@ -125,7 +125,7 @@ extern "C" {
                                                                                \
   uint32_t name##_size(const name *);                                          \
                                                                                \
-  void name##_iterator(name##Iterator *, name *const);                         \
+  void name##_iterator(name##Iterator *, const name *const);                   \
   bool name##_has_entry(const name##Iterator *const);                          \
   void name##_next_entry(name##Iterator *);                                    \
   const name##Pair *name##_entry(const name##Iterator *const);                 \
@@ -341,7 +341,7 @@ extern "C" {
     const uint32_t hval = hash_map->hash(key, key_size);                       \
     int num_probes = 0;                                                        \
     while (true) {                                                             \
-      int table_index =                                                        \
+      const int table_index =                                                  \
           MAPLIKE_LOOKUP_HASH_POSITION(hval, num_probes, capacity);            \
       ++num_probes;                                                            \
       name##Entry *entry = table + table_index;                                \
@@ -425,7 +425,7 @@ extern "C" {
                                                                                \
   uint32_t name##_size(const name *hash_map) { return hash_map->num_entries; } \
                                                                                \
-  void name##_iterator(name##Iterator *it, name *const map) {                  \
+  void name##_iterator(name##Iterator *it, const name *const map) {            \
     it->cur = map->first;                                                      \
   }                                                                            \
                                                                                \

@@ -86,7 +86,7 @@ extern "C" {
                                                                               \
   uint32_t name##_size(const name *);                                         \
                                                                               \
-  void name##_iterator(name##Iterator *, name *const);                        \
+  void name##_iterator(name##Iterator *, const name *const);                  \
   bool name##_has_next(const name##Iterator *const);                          \
   void name##_next(name##Iterator *);                                         \
   const value_type *name##_value(const name##Iterator *const);                \
@@ -379,7 +379,7 @@ extern "C" {
                                                                                \
   uint32_t name##_size(const name *hash_set) { return hash_set->num_entries; } \
                                                                                \
-  void name##_iterator(name##Iterator *it, name *const hash_set) {             \
+  void name##_iterator(name##Iterator *it, const name *const hash_set) {       \
     it->cur = hash_set->first;                                                 \
   }                                                                            \
                                                                                \

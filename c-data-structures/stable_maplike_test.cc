@@ -1,8 +1,20 @@
 #include "c-data-structures/stable_maplike.h"
 
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 namespace {
+using testing::IsNull;
+using testing::NotNull;
+
+DEFINE_STABLE_MAPLIKE(IntToIntMap, int, int);
+IMPL_STABLE_MAPLIKE(IntToIntMap, int, int);
+
+uint32_t hash_int(const int i, uint32_t size) { return i; }
+int32_t compare_ints(const int i1, uint32_t size1, const int i2,
+                     uint32_t size2) {
+  return i1 - i2;
+}
 
 /* Instantiate a map type for testing */
 DEFINE_STABLE_MAPLIKE(StringToIntMap, char *, int);
@@ -224,6 +236,43 @@ TEST_F(StringToIntMapTest, Iterator) {
   StringToIntMap_next_entry(&it);
 
   EXPECT_FALSE(StringToIntMap_has_entry(&it));
+}
+
+/* Test fixture to ensure proper setup / teardown */
+class IntToIntMapTest : public ::testing::Test {
+ protected:
+  IntToIntMap map{};
+
+  void SetUp() override {
+    ASSERT_TRUE(IntToIntMap_init(&map, hash_int, compare_ints));
+  }
+
+  void TearDown() override { IntToIntMap_finalize(&map); }
+};
+
+TEST_F(IntToIntMapTest, TestIntKey) {
+  // IntToIntMap_insert(&map, 0, sizeof(int), 0);
+  int *val;
+  IntToIntMap_insert(&map, 1, sizeof(int), &val);
+  *val = 11;
+  IntToIntMap_insert(&map, 2, sizeof(int), &val);
+  *val = 22;
+  IntToIntMap_insert(&map, 3, sizeof(int), &val);
+  *val = 33;
+
+  EXPECT_FALSE(IntToIntMap_contains(&map, 0, sizeof(int)));
+  EXPECT_TRUE(IntToIntMap_contains(&map, 1, sizeof(int)));
+  EXPECT_TRUE(IntToIntMap_contains(&map, 2, sizeof(int)));
+  EXPECT_TRUE(IntToIntMap_contains(&map, 3, sizeof(int)));
+
+  EXPECT_EQ(IntToIntMap_find(&map, 0, sizeof(int), -1), -1);
+  EXPECT_THAT(IntToIntMap_find_ref(&map, 0, sizeof(int)), IsNull());
+  EXPECT_EQ(IntToIntMap_find(&map, 1, sizeof(int), -1), 11);
+  EXPECT_EQ(*IntToIntMap_find_ref(&map, 1, sizeof(int)), 11);
+  EXPECT_EQ(IntToIntMap_find(&map, 2, sizeof(int), -1), 22);
+  EXPECT_EQ(*IntToIntMap_find_ref(&map, 2, sizeof(int)), 22);
+  EXPECT_EQ(IntToIntMap_find(&map, 3, sizeof(int), -1), 33);
+  EXPECT_EQ(*IntToIntMap_find_ref(&map, 3, sizeof(int)), 33);
 }
 
 }  // namespace
