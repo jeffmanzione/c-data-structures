@@ -1,6 +1,4 @@
-extern "C" {
 #include "c-data-structures/setlike.h"
-}
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
