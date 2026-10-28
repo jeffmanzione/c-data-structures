@@ -11,6 +11,15 @@ cc_library(
 )
 
 cc_test(
+    name = "arraylike_c_test",
+    size = "small",
+    srcs = ["arraylike_c_test.c"],
+    # Disable inlining so every function must have an external definition.
+    copts = ["-O0"],
+    deps = [":arraylike"],
+)
+
+cc_test(
     name = "arraylike_test",
     size = "small",
     srcs = ["arraylike_test.cc"],
