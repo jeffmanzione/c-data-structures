@@ -250,8 +250,8 @@ extern "C" {
     free(array);                                                               \
   }                                                                            \
                                                                                \
-  inline void name##_ensure_capacity(name *const array,                        \
-                                     size_t need_to_accomodate) {              \
+  static inline void name##_ensure_capacity(name *const array,                 \
+                                            size_t need_to_accomodate) {       \
     assert(array != NULL);                                                     \
     size_t new_capacity =                                                      \
         ((need_to_accomodate + ARRAYLIKE_DEFAULT_TABLE_SIZE - 1) /             \
