@@ -210,6 +210,29 @@ TEST_F(IntArrayTest, RightShrink) {
   EXPECT_EQ(IntArray_last_unchecked(&array), 2);
 }
 
+TEST_F(IntArrayTest, ShrinkByZeroIsNoOp) {
+  EXPECT_TRUE(IntArray_lshrink(&array, 0));
+  EXPECT_TRUE(IntArray_rshrink(&array, 0));
+  EXPECT_EQ(IntArray_size(&array), 0u);
+
+  for (int i = 0; i < 3; ++i) {
+    IntArray_push_back(&array, i);
+  }
+  EXPECT_TRUE(IntArray_lshrink(&array, 0));
+  EXPECT_TRUE(IntArray_rshrink(&array, 0));
+  EXPECT_EQ(IntArray_size(&array), 3u);
+  EXPECT_EQ(IntArray_get_unchecked(&array, 0), 0);
+  EXPECT_EQ(IntArray_last_unchecked(&array), 2);
+}
+
+TEST_F(IntArrayTest, LeftShrinkEntireArray) {
+  for (int i = 0; i < 3; ++i) {
+    IntArray_push_back(&array, i);
+  }
+  EXPECT_TRUE(IntArray_lshrink(&array, 3));
+  EXPECT_TRUE(IntArray_is_empty(&array));
+}
+
 /* -------------------------------------------------------------
  * Copying and append
  * ------------------------------------------------------------- */

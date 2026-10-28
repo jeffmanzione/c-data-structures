@@ -372,6 +372,9 @@ extern "C" {
     if (array->size < amount) {                                                \
       return false;                                                            \
     }                                                                          \
+    if (amount == 0) {                                                         \
+      return true;                                                             \
+    }                                                                          \
     name##_shift_left(array, amount, amount);                                  \
     array->size -= amount;                                                     \
     return true;                                                               \
