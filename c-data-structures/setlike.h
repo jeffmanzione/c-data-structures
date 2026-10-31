@@ -16,8 +16,34 @@ extern "C" {
 #define SETLIKE_LOOKUP_HASH_POSITION(hval, num_probes, capacity) \
   (((hval) + ((num_probes) * (num_probes))) % (capacity))
 
+// Returns the smallest prime that is at least n. Tables have prime capacities
+// so that quadratic probing visits (capacity + 1) / 2 distinct positions,
+// which, with fewer than capacity / 2 entries and tombstones, includes a vacant
+// one, so probing always ends.
+static inline uint32_t setlike_next_prime_(uint32_t n) {
+  if (n <= 2) {
+    return 2;
+  }
+  if (n % 2 == 0) {
+    n++;
+  }
+  for (;; n += 2) {
+    bool is_prime = true;
+    for (uint32_t d = 3; d * d <= n; d += 2) {
+      if (n % d == 0) {
+        is_prime = false;
+        break;
+      }
+    }
+    if (is_prime) {
+      return n;
+    }
+  }
+}
+
 // Calculates a new reasonable size of the hash table given a current size.
-#define SETLIKE_CALCULATE_NEW_capacity(current_size) (((current_size)*2) + 1)
+#define SETLIKE_CALCULATE_NEW_capacity(current_size) \
+  setlike_next_prime_(((current_size) * 2) + 1)
 
 // Calculates the threshold for number of entries in the given hash table size
 // before it efficieny starts to diminish and the table should be
@@ -53,7 +79,7 @@ extern "C" {
   typedef struct {                                                            \
     name##HashFn hash;                                                        \
     name##CompareFn compare;                                                  \
-    uint32_t capacity, num_entries, resize_threshold;                         \
+    uint32_t capacity, num_entries, num_tombstones, resize_threshold;         \
     name##Entry *table, *first, *last;                                        \
   } name;                                                                     \
                                                                               \
@@ -123,6 +149,7 @@ extern "C" {
         if (first_empty != NULL) {                                             \
           entry = first_empty;                                                 \
           num_probes = num_probes_at_first_empty;                              \
+          hash_set->num_tombstones--;                                          \
         }                                                                      \
         /* Take the vacant spot. */                                            \
         entry->value = (value_type)value;                                      \
@@ -186,8 +213,11 @@ extern "C" {
   }                                                                            \
                                                                                \
   static void name##_resize_table(name *hash_set) {                            \
+    /* Only grows if it has many entries rather than many tombstones. */       \
     const uint32_t new_capacity =                                              \
-        SETLIKE_CALCULATE_NEW_capacity(hash_set->capacity);                    \
+        hash_set->num_entries >= hash_set->resize_threshold / 2                \
+            ? SETLIKE_CALCULATE_NEW_capacity(hash_set->capacity)               \
+            : hash_set->capacity;                                              \
     name##Entry *new_table =                                                   \
         (name##Entry *)calloc(sizeof(name##Entry), new_capacity);              \
     name##Entry *new_first = NULL;                                             \
@@ -210,6 +240,7 @@ extern "C" {
     hash_set->capacity = new_capacity;                                         \
     hash_set->first = new_first;                                               \
     hash_set->last = new_last;                                                 \
+    hash_set->num_tombstones = 0;                                              \
     hash_set->resize_threshold =                                               \
         SETLIKE_CALCULATE_RESIZE_THRESHOLD(new_capacity);                      \
   }                                                                            \
@@ -238,12 +269,14 @@ extern "C" {
     }                                                                          \
     hash_set->hash = hash;                                                     \
     hash_set->compare = compare;                                               \
+    capacity = setlike_next_prime_(capacity);                                  \
     hash_set->capacity = capacity;                                             \
     hash_set->resize_threshold = SETLIKE_CALCULATE_RESIZE_THRESHOLD(capacity); \
     hash_set->table = NULL;                                                    \
     hash_set->first = NULL;                                                    \
     hash_set->last = NULL;                                                     \
     hash_set->num_entries = 0;                                                 \
+    hash_set->num_tombstones = 0;                                              \
     return true;                                                               \
   }                                                                            \
                                                                                \
@@ -264,7 +297,8 @@ extern "C" {
     if (hash_set->table == NULL) {                                             \
       hash_set->table =                                                        \
           (name##Entry *)calloc(sizeof(name##Entry), hash_set->capacity);      \
-    } else if (hash_set->num_entries > hash_set->resize_threshold) {           \
+    } else if (hash_set->num_entries + hash_set->num_tombstones >=             \
+               hash_set->resize_threshold) {                                   \
       name##_resize_table(hash_set);                                           \
     }                                                                          \
     bool probe_limit_exceeded = false;                                         \
@@ -302,6 +336,11 @@ extern "C" {
       int table_index =                                                        \
           SETLIKE_LOOKUP_HASH_POSITION(hval, num_probes, capacity);            \
       ++num_probes;                                                            \
+      /* Only reached if the table is corrupt, since a vacant position is      \
+       * always found within capacity probes. */                               \
+      if (num_probes > (int)capacity) {                                        \
+        return NULL;                                                           \
+      }                                                                        \
       name##Entry *entry = table + table_index;                                \
       if (SETLIKE_IS_EMPTY(entry)) {                                           \
         return NULL;                                                           \
@@ -340,6 +379,7 @@ extern "C" {
     }                                                                          \
     entry->num_probes = SETLIKE_TOMBSTONE;                                     \
     hash_set->num_entries--;                                                   \
+    hash_set->num_tombstones++;                                                \
     return true;                                                               \
   }                                                                            \
                                                                                \
