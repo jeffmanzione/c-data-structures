@@ -68,7 +68,8 @@ TEST(StringToIntMapStandaloneTest, InitWithCapacity) {
   StringToIntMap map{};
   EXPECT_TRUE(
       StringToIntMap_init_capacity(&map, 16, hash_string, compare_strings));
-  EXPECT_EQ(map.capacity, 16u);
+  // Rounded up to a prime.
+  EXPECT_EQ(map.capacity, 17u);
   EXPECT_EQ(StringToIntMap_size(&map), 0u);
   StringToIntMap_finalize(&map);
 }
@@ -90,10 +91,49 @@ TEST(StringToIntMapStandaloneTest, CreateWithCapacity) {
   StringToIntMap* map =
       StringToIntMap_create_capacity(16, hash_string, compare_strings);
   EXPECT_THAT(map, NotNull());
-  EXPECT_EQ(map->capacity, 16u);
+  // Rounded up to a prime.
+  EXPECT_EQ(map->capacity, 17u);
   EXPECT_EQ(StringToIntMap_size(map), 0u);
   StringToIntMap_delete(map);
 }
+// Removed entries leave tombstones, which used to accumulate until no vacant
+// position was left, after which looking up a missing key never returned.
+TEST(IntToIntMapStandaloneTest, ChurnDoesNotFillTableWithTombstones) {
+  IntToIntMap map{};
+  ASSERT_TRUE(IntToIntMap_init_capacity(&map, 17, hash_int, compare_ints));
+  IntToIntMap_insert(&map, -1, sizeof(int), -1);
+  for (int i = 0; i < 10000; ++i) {
+    IntToIntMap_insert(&map, i, sizeof(int), i);
+    EXPECT_TRUE(IntToIntMap_remove(&map, i, sizeof(int), NULL));
+    EXPECT_FALSE(IntToIntMap_contains(&map, i + 1, sizeof(int)));
+  }
+  EXPECT_EQ(IntToIntMap_size(&map), 1u);
+  EXPECT_EQ(IntToIntMap_find(&map, -1, sizeof(int), 0), -1);
+  // Only entries make it grow.
+  EXPECT_EQ(map.capacity, 17u);
+  IntToIntMap_finalize(&map);
+}
+
+TEST(IntToIntMapStandaloneTest, ChurnKeepsAllEntries) {
+  IntToIntMap map{};
+  ASSERT_TRUE(IntToIntMap_init(&map, hash_int, compare_ints));
+  for (int i = 0; i < 1000; ++i) {
+    IntToIntMap_insert(&map, i, sizeof(int), i);
+  }
+  for (int i = 0; i < 1000; i += 2) {
+    EXPECT_TRUE(IntToIntMap_remove(&map, i, sizeof(int), NULL));
+  }
+  for (int i = 1000; i < 2000; ++i) {
+    IntToIntMap_insert(&map, i, sizeof(int), i);
+  }
+  for (int i = 0; i < 2000; ++i) {
+    const bool expected = i >= 1000 || i % 2 == 1;
+    EXPECT_EQ(IntToIntMap_contains(&map, i, sizeof(int)), expected) << i;
+  }
+  EXPECT_EQ(IntToIntMap_size(&map), 1500u);
+  IntToIntMap_finalize(&map);
+}
+
 // /* -------------------------------------------------------------
 //  * Insert / Remove
 //  * ------------------------------------------------------------- */

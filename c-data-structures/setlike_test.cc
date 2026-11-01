@@ -229,6 +229,25 @@ TEST(Int32HashSetTest, Size) {
   Int32HashSet_finalize(&hash_set);
 }
 
+// Removed values leave tombstones, which used to accumulate until no vacant
+// position was left, after which looking up a missing value never returned.
+TEST(Int32HashSetTest, ChurnDoesNotFillTableWithTombstones) {
+  Int32HashSet hash_set;
+  ASSERT_TRUE(
+      Int32HashSet_init_capacity(&hash_set, 17, hash_int32, compare_int32s));
+  Int32HashSet_insert(&hash_set, -1, sizeof(int32_t));
+  for (int32_t i = 0; i < 10000; ++i) {
+    Int32HashSet_insert(&hash_set, i, sizeof(int32_t));
+    EXPECT_TRUE(Int32HashSet_remove(&hash_set, i, sizeof(int32_t)));
+    EXPECT_FALSE(Int32HashSet_contains(&hash_set, i + 1, sizeof(int32_t)));
+  }
+  EXPECT_EQ(Int32HashSet_size(&hash_set), 1u);
+  EXPECT_TRUE(Int32HashSet_contains(&hash_set, -1, sizeof(int32_t)));
+  // Only values make it grow.
+  EXPECT_EQ(hash_set.capacity, 17u);
+  Int32HashSet_finalize(&hash_set);
+}
+
 TEST(Int32HashSetTest, Iterator) {
   Int32HashSet hash_set;
   Int32HashSet_init(&hash_set, hash_int32, compare_int32s);
